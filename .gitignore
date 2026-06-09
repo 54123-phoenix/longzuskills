@@ -3,3 +3,6 @@ package-lock.json
 .env
 *.log
 data.json
+data.db
+data.db-journal
+data.db-wal
