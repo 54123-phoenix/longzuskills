@@ -3,18 +3,23 @@ const GroupChat = {
 
   init(socket) {
     this.socket = socket;
-    const stored = localStorage.getItem('gc');
-    if (stored) try { this.messages = JSON.parse(stored); } catch {}
-    if (this.messages.length === 0) {
-      this.addSystem('🐉 欢迎加入龙族聊天群！');
-    }
     this.bindEvents();
-    this.render();
+    // load from server
+    fetch('/api/group-history').then(r=>r.json()).then(msgs=>{
+      this.messages = msgs.length>0 ? msgs : [];
+      if (this.messages.length === 0) {
+        this.addLocalSystem('🐉 欢迎加入龙族聊天群！');
+      }
+      this.render();
+    }).catch(()=>{
+      if (this.messages.length===0) this.addLocalSystem('🐉 欢迎加入龙族聊天群！');
+      this.render();
+    });
   },
 
-  addSystem(t) { this.messages.push({ type: 'system', text: t, ts: Date.now() }); this.save(); },
+  addLocalSystem(t) { this.messages.push({ type: 'system', text: t, ts: Date.now() }); },
 
-  save() { localStorage.setItem('gc', JSON.stringify(this.messages)); },
+  save() {},
 
   render() {
     const c = document.getElementById('group-chat-area');
@@ -57,10 +62,10 @@ const GroupChat = {
     if (!text || this.isLoading) return;
     const p = UserProfile.get();
     const msg = { type:'user', text, name:p.nickname, avatar:p.avatar, color:p.color, ts:Date.now(), isSelf:true };
-    this.messages.push(msg); this.save(); this.renderMsgs();
+    this.messages.push(msg); this.renderMsgs();
     input.value = '';
     this.isLoading = true;
-    if (this.socket) this.socket.emit('group-message', msg);
+    if (this.socket) this.socket.emit('gm', msg);
     const el = document.getElementById('gt');
     if (el) el.textContent = '⏳ 角色们思考中...';
     try {
@@ -78,7 +83,8 @@ const GroupChat = {
           const [emo, col] = charMap[reply.charId]||['👤','#999'];
           const m = { type:'user', text:reply.text, name:reply.name,
             avatar:emo, color:col, ts:Date.now(), isSelf:false, charId:reply.charId };
-          this.messages.push(m); this.save(); this.renderMsgs();
+          this.messages.push(m); this.renderMsgs();
+          if (this.socket) this.socket.emit('gm', m);
           await new Promise(r => setTimeout(r, 600));
         }
       }
@@ -88,8 +94,8 @@ const GroupChat = {
 
   bindEvents() {
     if (!this.socket) return;
-    this.socket.on('group-message', msg => { if (!msg.isSelf) { this.messages.push(msg); this.save(); this.renderMsgs(); } });
-    this.socket.on('user-online', d => { const e=document.getElementById('goc'); if(e) e.textContent=d.onlineCount+'人在线'; });
-    this.socket.on('user-offline', d => { const e=document.getElementById('goc'); if(e) e.textContent=d.onlineCount+'人在线'; });
+    this.socket.on('gm', msg => { if (!msg.isSelf) { this.messages.push(msg); this.renderMsgs(); } });
+    this.socket.on('on', d => { const e=document.getElementById('goc'); if(e) e.textContent=d.c+'人在线'; });
+    this.socket.on('off', d => { const e=document.getElementById('goc'); if(e) e.textContent=d.c+'人在线'; });
   }
 };
