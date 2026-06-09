@@ -78,6 +78,7 @@ const PrivateChat = {
           <div class="private-chat-header-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div>
             <div class="private-chat-header-name">${ch.name}
+              <span class="role-badge ${id}">${['hly','fge','czh','lmf','jn'].indexOf(id)+1}/5</span>
               <span style="font-size:12px;color:#999;margin-left:6px">${prof.labels.join('·')||'陌生人'} · ${prof.count}轮</span>
             </div>
           </div>

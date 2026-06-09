@@ -1,75 +1,13 @@
 const CHARACTERS = {
-  hly: {
-    id: 'hly', name: '绘梨衣', emoji: '🌸', color: '#e8739a', gender: 'female',
-    description: '天真沉默的女孩，用文字与世界对话',
-    tagline: '世界是最温柔的地方……',
-    modelCount: 85
-  },
-  fge: {
-    id: 'fge', name: '芬格尔', emoji: '🍔', color: '#f5a623', gender: 'male',
-    description: '自嘲吃货，情报之王',
-    tagline: '你废柴师兄前来报到！',
-    modelCount: 128
-  },
-  czh: {
-    id: 'czh', name: '楚子航', emoji: '🗡️', color: '#4a90d9', gender: 'male',
-    description: '话极少的狮心会会长',
-    tagline: '嗯。',
-    modelCount: 60
-  },
-  lmf: {
-    id: 'lmf', name: '路明非', emoji: '🐉', color: '#7b68ee', gender: 'male',
-    description: '自称废柴的S级混血种',
-    tagline: '我们都是小怪兽……',
-    modelCount: 150
-  },
-  jn: {
-    id: 'jn', name: '江南', emoji: '✍️', color: '#2c3e50', gender: 'male',
-    description: '龙族作者，拖稿之王',
-    tagline: '写不进去的才是护城河',
-    modelCount: 200
-  }
+  hly: { id:'hly', name:'绘梨衣', emoji:'🌸', color:'#e8739a', gender:'female', description:'天真沉默的女孩，用文字与世界对话。每句带省略号。' },
+  fge: { id:'fge', name:'芬格尔', emoji:'🍔', color:'#f5a623', gender:'male', description:'自嘲吃货，情报之王。表面废柴，深藏不露。' },
+  czh: { id:'czh', name:'楚子航', emoji:'🗡️', color:'#4a90d9', gender:'male', description:'话极少的狮心会会长。沉默不是冷漠，是不懂表达。' },
+  lmf: { id:'lmf', name:'路明非', emoji:'🐉', color:'#7b68ee', gender:'male', description:'自称废柴的S级。不敢面对自己的力量。' },
+  jn: { id:'jn', name:'江南', emoji:'✍️', color:'#2c3e50', gender:'male', description:'龙族作者，拖稿大王。化学系出身用科学写故事。' }
 };
 
 function escapeHtml(text) {
   if (text == null) return '';
-  const d = document.createElement('div');
-  d.textContent = text;
+  const d = document.createElement('div'); d.textContent = text;
   return d.innerHTML;
 }
-
-const CHARACTER_TOPICS = {
-  hly: {
-    intro: ['哥哥你好……🌸', '绘梨衣在等你来……', '外面下雨了……绘梨衣喜欢下雨天……'],
-    sakura: ['世界上最美好的东西……是樱花……🌸', '绘梨衣想和哥哥一起看樱花……', '樱花落下的声音……很轻很轻……'],
-    food: ['绘梨衣喜欢……甜的……好的……', '冰淇淋……好吃……哥哥也一起吃吗……', '热气腾腾的食物……让人安心……'],
-    feeling: ['绘梨衣很开心……因为哥哥在……', '有点寂寞……但是哥哥来了就不寂寞了……', '害怕的时候……想想哥哥就不怕了……'],
-    casual: ['今天天气很好呢……☀️', '哥哥今天过得怎么样……', '绘梨衣看到了一只小猫……好可爱……🐱', '风很温柔……像哥哥一样……']
-  },
-  fge: {
-    intro: ['哟师弟来啦！', '哎哟这不是我亲爱的师弟嘛！', '师弟你可算来了！'],
-    food: ['师弟你吃饭了吗？没吃的话你请客呗？', '我知道新开了一家烤肉店，一起去？你请客！', '师弟我今天又没钱了……你懂的……'],
-    gossip: ['哎你听说了吗？', '我跟你讲个秘密……', '八卦时间到！'],
-    casual: ['今天天气不错适合睡觉！', '我在宿舍打了一天游戏，人生巅峰了！', '人生苦短及时行乐啊师弟！']
-  },
-  czh: {
-    intro: ['嗯。', '来了。', '说。'],
-    sword: ['剑术每日必修。', '刀剑无眼小心为上。', '你的姿势不对重心再低一些。', '拔剑要快，收剑要稳。'],
-    protect: ['需要帮忙？', '有危险叫我。', '我在。', '护你周全。', '你退后前面交给我。'],
-    casual: ['嗯。', '知道了。', '还行。', '不累。', '走了。']
-  },
-  lmf: {
-    intro: ['哟你来了啊……我还以为没人会找我呢。', '你好你好稀客稀客！', '哎你来得正好我正无聊呢。'],
-    selfdep: ['我路明非就是个废柴啥都干不好。', '你看看人家楚师兄再看看我……', '今天的我也在完美地做个废物呢。'],
-    game: ['昨天打游戏打到凌晨三点。', '你说这游戏设计合理吗boss也太赖皮了！', '你玩不玩游戏来组队啊！'],
-    protect: ['虽然我是废柴但要我看着朋友出事我做不到。', '我不想再失去任何人了。', '哪怕拼上这条命我也要保护想保护的人。'],
-    casual: ['今天又混了一天像一条咸鱼。', '你吃饭了吗我在纠结泡面还是外卖。', '今天天气真好适合在家躺尸。']
-  },
-  jn: {
-    intro: ['来了？坐下聊聊。', '我正在写新章节正好你来了歇会儿。', '你好我是江南你可能读过我的书。'],
-    writing: ['写小说像盖房子一砖一瓦都是心血。', '卡文了每天都卡文。', '每个角色都有自己的生命我只是记录他们。'],
-    science: ['熵增定律告诉我拖延是宇宙规律。', '薛定谔的稿子——打开前既是写完的也是没写的。', '时间相对论——我拖一周读者像过一年。'],
-    character: ['绘梨衣是我写过最纯粹的角色。', '路明非代表了我们心里那个不愿认输的自己。', '芬格尔是我写得最开心的角色。'],
-    casual: ['喝咖啡吗我这儿有速溶的。', '我又熬了一个通宵。', '我觉得我上辈子是一棵树。']
-  }
-};

@@ -867,3 +867,56 @@ body { background: var(--bg); color: var(--text); }
   width: 100%; height: 4px; background: var(--border); border-radius: 2px; margin-top: 4px; overflow: hidden;
 }
 .intimacy-fill { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.5s; }
+
+/* ========== Typing Dots Animation ========== */
+.typing-dots span {
+  display: inline-block; width: 4px; height: 4px; border-radius: 50%;
+  background: var(--primary); margin: 0 1px; animation: bounce 1.4s infinite both;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ========== Dragon Theme Elements ========== */
+:root {
+  --dragon-gold: #c9a96e;
+  --dragon-red: #8b0000;
+  --dragon-dark: #0a0a1a;
+  --dragon-ember: #e8739a;
+}
+
+/* Sidebar dragon vibe */
+.sidebar-header::before {
+  content: ''; display: inline-block; width: 20px; height: 20px;
+  background: radial-gradient(circle, var(--dragon-gold), transparent 80%);
+  margin-right: 6px; border-radius: 50%;
+}
+
+/* Message bubble dragon accent */
+.chat-header {
+  background: linear-gradient(135deg, var(--card-bg), var(--card-bg)), linear-gradient(135deg, var(--dragon-gold) 0%, var(--dragon-red) 100%);
+  background-blend-mode: normal;
+  box-shadow: inset 0 -1px 0 var(--dragon-gold);
+}
+.chat-header-title { color: var(--text); font-weight: 700; }
+
+/* Character role badges */
+.role-badge {
+  display: inline-block; padding: 1px 6px; border-radius: 10px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+}
+.role-badge.hly { background: #e8739a22; color: #e8739a; }
+.role-badge.fge { background: #f5a62322; color: #f5a623; }
+.role-badge.czh { background: #4a90d922; color: #4a90d9; }
+.role-badge.lmf { background: #7b68ee22; color: #7b68ee; }
+.role-badge.jn { background: #2c3e5022; color: #2c3e50; }
+
+/* Namespaces for private chat headers */
+.dark .role-badge.hly { background: #e8739a44; }
+.dark .role-badge.fge { background: #f5a62344; }
+.dark .role-badge.czh { background: #4a90d944; }
+.dark .role-badge.lmf { background: #7b68ee44; }
+.dark .role-badge.jn { background: #2c3e5044; }

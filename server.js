@@ -12,6 +12,16 @@ const ws = require('./src/websocket');
 const app = express();
 const server = http.createServer(app);
 
+// Simple request logger
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    if (req.path.startsWith('/api/')) console.log(`${req.method} ${req.path} ${res.statusCode} ${ms}ms`);
+  });
+  next();
+});
+
 // Init AI
 ai.init(process.env.DASHSCOPE_API_KEY);
 
@@ -22,6 +32,12 @@ app.use(express.json());
 // Routes
 app.use('/api', chatRoutes);
 app.use('/api', groupRoutes);
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(`[ERROR] ${req.method} ${req.path}:`, err.message);
+  res.status(500).json({ error: '服务器内部错误', detail: process.env.NODE_ENV === 'development' ? err.message : undefined });
+});
 
 // WebSocket
 ws.init(server);
