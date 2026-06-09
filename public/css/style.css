@@ -753,6 +753,32 @@ html, body {
   margin-top: 20px;
 }
 
+/* ========== Quick Actions ========== */
+.quick-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+}
+
+.quick-topic-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #fff;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-topic-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(123,104,238,0.05);
+}
+
 /* ========== Utility ========== */
 .hidden {
   display: none !important;
