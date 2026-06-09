@@ -129,6 +129,7 @@ const PrivateChat = {
   render() {
     const c = document.getElementById('pm'); if (!c) return;
     const ch = CHARACTERS[this.current];
+    const charId = this.current;
     c.innerHTML = this.ch.map((m,i) => {
       if (m.isSelf) {
         return `<div class="private-msg private-msg-self" data-idx="${i}">
@@ -139,7 +140,7 @@ const PrivateChat = {
           <div class="private-msg-bubble private-bubble-self">${this.e(m.text)}</div>
         </div>`;
       } else {
-        return `<div class="private-msg private-msg-other" data-idx="${i}">
+        return `<div class="private-msg private-msg-other" data-char="${charId}" data-idx="${i}">
           <div class="private-msg-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div class="private-msg-content">
             <div class="private-msg-name">${ch.name}</div>
@@ -195,10 +196,30 @@ const PrivateChat = {
       });
       const d = await r.json();
       if (d.reply) { this.ch.push({ text:d.reply, isSelf:false, timestamp:Date.now() }); this.render(); }
-      if (d.profile) { this.profiles[id] = d.profile; this.sidebar(); }
+      if (d.profile) {
+        const old = this.profiles[id] || {};
+        const deltas = [];
+        if (old.trust !== d.profile.trust && d.profile.trust > 0) deltas.push(`信任+${d.profile.trust - (old.trust||0)}`);
+        if (old.respect !== d.profile.respect && d.profile.respect > 0) deltas.push(`尊重+${d.profile.respect - (old.respect||0)}`);
+        if (old.closeness !== d.profile.closeness && d.profile.closeness > 0) deltas.push(`亲密+${d.profile.closeness - (old.closeness||0)}`);
+        if (old.dependency !== d.profile.dependency && d.profile.dependency > 0) deltas.push(`依赖+${d.profile.dependency - (old.dependency||0)}`);
+        if (deltas.length > 0) this.showGrowthToast(deltas);
+        this.profiles[id] = d.profile;
+        this.sidebar();
+      }
     } catch(e) {}
     this.streaming = false;
     if(i) i.disabled=false; if(s) s.disabled=false; if(i) i.focus();
+  },
+
+  showGrowthToast(deltas) {
+    const existing = document.querySelector('.growth-delta');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.className = 'growth-delta';
+    toast.innerHTML = deltas.join(' ');
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3500);
   },
 
   e(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }

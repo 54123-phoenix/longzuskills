@@ -920,3 +920,93 @@ body { background: var(--bg); color: var(--text); }
 .dark .role-badge.czh { background: #4a90d944; }
 .dark .role-badge.lmf { background: #7b68ee44; }
 .dark .role-badge.jn { background: #2c3e5044; }
+
+/* ========== Per-Character Visual Identity ========== */
+/* 绘梨衣 - 樱花粉，柔光 */
+.private-msg[data-char="hly"] .private-bubble-other {
+  background: linear-gradient(135deg, #fff0f5, #ffe4ec);
+  border: 1px solid #e8739a33;
+  border-bottom-left-radius: 4px;
+}
+.private-msg[data-char="hly"] .private-msg-avatar {
+  box-shadow: 0 0 8px #e8739a66;
+}
+.dark .private-msg[data-char="hly"] .private-bubble-other {
+  background: linear-gradient(135deg, #1a0a12, #2a1020);
+  border-color: #e8739a44;
+}
+
+/* 芬格尔 - 暖橙，粗粝 */
+.private-msg[data-char="fge"] .private-bubble-other {
+  background: linear-gradient(135deg, #fff8f0, #ffeedd);
+  border: 1px solid #f5a62333;
+}
+.private-msg[data-char="fge"] .private-msg-avatar {
+  box-shadow: 0 0 8px #f5a62366;
+}
+.dark .private-msg[data-char="fge"] .private-bubble-other {
+  background: linear-gradient(135deg, #1a1008, #2a1808);
+  border-color: #f5a62344;
+}
+
+/* 楚子航 - 冰蓝，锐利 */
+.private-msg[data-char="czh"] .private-bubble-other {
+  background: linear-gradient(135deg, #f0f5ff, #e8f0fe);
+  border: 1px solid #4a90d933;
+  border-bottom-left-radius: 0;
+}
+.private-msg[data-char="czh"] .private-msg-avatar {
+  box-shadow: 0 0 8px #4a90d966;
+}
+.dark .private-msg[data-char="czh"] .private-bubble-other {
+  background: linear-gradient(135deg, #081020, #0a1830);
+  border-color: #4a90d944;
+}
+
+/* 路明非 - 紫罗兰 */
+.private-msg[data-char="lmf"] .private-bubble-other {
+  background: linear-gradient(135deg, #f5f0ff, #ede8ff);
+  border: 1px solid #7b68ee33;
+}
+.private-msg[data-char="lmf"] .private-msg-avatar {
+  box-shadow: 0 0 8px #7b68ee66;
+}
+.dark .private-msg[data-char="lmf"] .private-bubble-other {
+  background: linear-gradient(135deg, #100a20, #1a1030);
+  border-color: #7b68ee44;
+}
+
+/* 江南 - 墨色，沉稳 */
+.private-msg[data-char="jn"] .private-bubble-other {
+  background: linear-gradient(135deg, #f8f8fa, #f0f0f4);
+  border: 1px solid #2c3e5033;
+}
+.private-msg[data-char="jn"] .private-msg-avatar {
+  box-shadow: 0 0 8px #2c3e5066;
+}
+.dark .private-msg[data-char="jn"] .private-bubble-other {
+  background: linear-gradient(135deg, #121420, #1a1c2a);
+  border-color: #2c3e5044;
+}
+
+/* Avatar glow pulse on new message */
+@keyframes avatarPulse {
+  0% { box-shadow: 0 0 4px currentColor; }
+  50% { box-shadow: 0 0 12px currentColor; }
+  100% { box-shadow: 0 0 4px currentColor; }
+}
+.private-msg-other:last-child .private-msg-avatar {
+  animation: avatarPulse 1.5s ease-in-out;
+}
+
+/* ========== Growth Delta Toast ========== */
+.growth-delta {
+  display: inline-flex; gap: 6px; padding: 4px 10px;
+  border-radius: 12px; font-size: 11px;
+  background: var(--primary); color: #fff;
+  animation: deltaSlideIn 0.5s ease-out, deltaFadeOut 2s 1.5s forwards;
+  position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+  z-index: 100; white-space: nowrap;
+}
+@keyframes deltaSlideIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes deltaFadeOut { to { opacity: 0; } }
