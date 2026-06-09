@@ -1,12 +1,9 @@
-const PrivateChat = {
+(function() {
+const PC = {
   current: null, histories: {}, streaming: false, profiles: {},
   model: localStorage.getItem('dm') || 'qwen-plus',
 
-  init() {
-    this.loadProfiles();
-    Object.keys(CHARACTERS).forEach(id => { this.histories[id] = []; });
-    this.sidebar();
-  },
+  init() { this.loadProfiles(); Object.keys(window.CHARACTERS).forEach(id => { this.histories[id] = []; }); this.sidebar(); },
 
   async loadProfiles() {
     try { const r = await fetch('/api/all-profiles'); this.profiles = await r.json(); } catch(e) {}
@@ -17,19 +14,17 @@ const PrivateChat = {
     try {
       const r = await fetch(`/api/history/${id}?limit=30&offset=${offset||0}`);
       const d = await r.json();
-      if (offset) {
-        this.histories[id] = [...d.msgs, ...this.histories[id]];
-      } else {
-        this.histories[id] = d.msgs || [];
-      }
+      if (offset) { this.histories[id] = [...d.msgs, ...this.histories[id]]; }
+      else { this.histories[id] = d.msgs || []; }
     } catch(e) { if(!offset) this.histories[id]=[]; }
   },
 
   sidebar() {
     const c = document.getElementById('private-chat-list');
     if (!c) return;
+    const chars = window.CHARACTERS;
     c.innerHTML = `<div class="sidebar-section-title">💬 私聊</div>
-      ${Object.values(CHARACTERS).map(ch => {
+      ${Object.values(chars).map(ch => {
         const prof = this.profiles[ch.id] || { count:0, trust:0, respect:0, closeness:0, dependency:0, labels:['陌生人'] };
         const top = [prof.trust, prof.closeness, prof.respect, prof.dependency];
         const score = Math.floor(top.reduce((a,b)=>a+b,0)/4);
@@ -49,7 +44,7 @@ const PrivateChat = {
 
   async open(id) {
     this.current = id;
-    const ch = CHARACTERS[id]; if (!ch) return;
+    const ch = window.CHARACTERS[id]; if (!ch) return;
     await this.loadHistory(id);
     this.ch = this.histories[id] || [];
     const prof = this.profiles[id] || { count:0, trust:0, respect:0, closeness:0, dependency:0, labels:['陌生人'] };
@@ -70,49 +65,39 @@ const PrivateChat = {
         <span style="font-size:10px;color:var(--text-light)">${d.v>=80?d.h:d.v>=30?'进行中':'未触发'}</span>
       </div>`
     ).join('');
-
     const main = document.getElementById('main-content');
     main.innerHTML = `<div class="private-chat-container">
       <div class="private-chat-header">
         <div class="private-chat-header-left">
           <div class="private-chat-header-avatar" style="background:${ch.color}">${ch.emoji}</div>
-          <div>
-            <div class="private-chat-header-name">${ch.name}
-              <span class="role-badge ${id}">${['hly','fge','czh','lmf','jn'].indexOf(id)+1}/5</span>
-              <span style="font-size:12px;color:#999;margin-left:6px">${prof.labels.join('·')||'陌生人'} · ${prof.count}轮</span>
-            </div>
-          </div>
+          <div><div class="private-chat-header-name">${ch.name}
+            <span class="role-badge ${id}">${['hly','fge','czh','lmf','jn'].indexOf(id)+1}/5</span>
+            <span style="font-size:12px;color:#999;margin-left:6px">${prof.labels.join('·')||'陌生人'} · ${prof.count}轮</span></div></div>
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--text-light)">模型</span>
-          <select id="ms" onchange="PrivateChat.model=this.value;localStorage.setItem('dm',this.value)">
-            <option value="qwen-turbo" ${this.model==='qwen-turbo'?'selected':''}>⚡ 极速</option>
-            <option value="qwen-plus" ${this.model==='qwen-plus'?'selected':''}>🚀 平衡</option>
-            <option value="qwen-max" ${this.model==='qwen-max'?'selected':''}>💎 最强</option>
+          <select id="ms" onchange="window.LZPrivate.model=this.value;localStorage.setItem('dm',this.value)">
+            <option value="qwen-turbo" ${this.model==='qwen-turbo'?'selected':''}>⚡极速</option>
+            <option value="qwen-plus" ${this.model==='qwen-plus'?'selected':''}>🚀平衡</option>
+            <option value="qwen-max" ${this.model==='qwen-max'?'selected':''}>💎最强</option>
           </select>
-          <button class="btn btn-secondary btn-sm" id="nc">🔄 新</button>
+          <button class="btn btn-secondary btn-sm" id="nc">🔄新</button>
         </div>
       </div>
-      <div class="private-chat-dims" style="padding:8px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)">${dimHTML}</div>
+      <div style="padding:8px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)">${dimHTML}</div>
       <div class="private-chat-messages" id="pm">
         ${this.ch.length===0 ? `<div class="private-chat-welcome">
           <div class="welcome-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div class="welcome-text">和 ${ch.name} 对话</div>
           <div class="private-chat-stats">均分${score} · ${prof.labels.join(',')}</div>
-          <div class="intimacy-bar"><div class="intimacy-fill" style="width:${score}%"></div></div>
-        </div>` : ''}
+          <div class="intimacy-bar"><div class="intimacy-fill" style="width:${score}%"></div></div></div>` : ''}
       </div>
       <div class="chat-input-area"><div class="chat-input-wrapper">
         <input class="chat-input" id="pi" placeholder="给 ${ch.name} 发送..." maxlength="500" ${this.streaming?'disabled':''}>
-        <button class="chat-send-btn" id="ps" ${this.streaming?'disabled':''}>发送</button>
-      </div></div>
-    </div>`;
+        <button class="chat-send-btn" id="ps" ${this.streaming?'disabled':''}>发送</button></div></div></div>`;
 
     const i = document.getElementById('pi'), s = document.getElementById('ps');
-    if (i && s) {
-      s.onclick = () => { const t=i.value.trim(); if(t) this.sendMsg(id,t,i); };
-      i.onkeydown = e => { if(e.key==='Enter'){ const t=i.value.trim(); if(t) this.sendMsg(id,t,i); } };
-    }
+    if (i && s) { s.onclick = () => { const t=i.value.trim(); if(t) this.sendMsg(id,t,i); }; i.onkeydown = e => { if(e.key==='Enter'){ const t=i.value.trim(); if(t) this.sendMsg(id,t,i); } }; }
     document.getElementById('nc')?.addEventListener('click', async () => {
       await fetch(`/api/history/${id}`,{method:'DELETE'}); this.histories[id]=[]; this.ch=[];
       await this.loadProfiles(); this.open(id);
@@ -121,65 +106,45 @@ const PrivateChat = {
     this.sidebar();
   },
 
-  sendMsg(id, text, input) {
-    this.ch.push({ text, isSelf: true, timestamp: Date.now() });
-    input.value = ''; this.render(); this.fetchReply(id);
-  },
+  sendMsg(id, text, input) { this.ch.push({ text, isSelf: true, timestamp: Date.now() }); input.value = ''; this.render(); this.fetchReply(id); },
 
   render() {
     const c = document.getElementById('pm'); if (!c) return;
-    const ch = CHARACTERS[this.current];
-    const charId = this.current;
+    const ch = window.CHARACTERS[this.current];
+    const e = window.escHtml, id = this.current;
     c.innerHTML = this.ch.map((m,i) => {
       if (m.isSelf) {
         return `<div class="private-msg private-msg-self" data-idx="${i}">
           <div class="msg-actions" style="justify-content:flex-end">
-            <button class="msg-action-btn" onclick="PrivateChat.editMsg(${i})" title="编辑">✏️</button>
-            <button class="msg-action-btn" onclick="PrivateChat.regenerate(${i})" title="重发">🔄</button>
+            <button class="msg-action-btn" onclick="window.LZPrivate.editMsg(${i})">✏️</button>
+            <button class="msg-action-btn" onclick="window.LZPrivate.regenerate(${i})">🔄</button>
           </div>
-          <div class="private-msg-bubble private-bubble-self">${this.e(m.text)}</div>
-        </div>`;
+          <div class="private-msg-bubble private-bubble-self">${e(m.text)}</div></div>`;
       } else {
-        return `<div class="private-msg private-msg-other" data-char="${charId}" data-idx="${i}">
+        return `<div class="private-msg private-msg-other" data-char="${id}" data-idx="${i}">
           <div class="private-msg-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div class="private-msg-content">
             <div class="private-msg-name">${ch.name}</div>
-            <div class="private-msg-bubble private-bubble-other">${this.e(m.text)}</div>
-            <div class="msg-actions">
-              <button class="msg-action-btn" onclick="PrivateChat.regenerate(${i})" title="重新生成">🔄</button>
-            </div>
-          </div>
-        </div>`;
+            <div class="private-msg-bubble private-bubble-other">${e(m.text)}</div>
+            <div class="msg-actions"><button class="msg-action-btn" onclick="window.LZPrivate.regenerate(${i})">🔄</button></div>
+          </div></div>`;
       }
     }).join('');
     c.scrollTop = c.scrollHeight;
   },
 
   editMsg(idx) {
-    const msg = this.ch[idx];
-    if (!msg || !msg.isSelf) return;
+    const msg = this.ch[idx]; if (!msg || !msg.isSelf) return;
     const newText = prompt('编辑消息:', msg.text);
-    if (newText && newText.trim()) {
-      msg.text = newText.trim();
-      // Remove subsequent messages and regenerate
-      this.ch = this.ch.slice(0, idx + 1);
-      this.render();
-      this.fetchReply(this.current);
-    }
+    if (newText && newText.trim()) { msg.text = newText.trim(); this.ch = this.ch.slice(0, idx + 1); this.render(); this.fetchReply(this.current); }
   },
 
   async regenerate(idx) {
-    const msg = this.ch[idx];
-    if (!msg) return;
-    // Remove the targeted AI message and subsequent messages
+    const msg = this.ch[idx]; if (!msg) return;
     const cutIdx = msg.isSelf ? idx : idx;
-    this.ch = this.ch.slice(0, cutIdx + (msg.isSelf ? 0 : 0));
-    this.render();
+    this.ch = this.ch.slice(0, cutIdx + (msg.isSelf ? 0 : 0)); this.render();
     try {
-      const r = await fetch('/api/regenerate', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ charId:this.current, model:this.model, userName:'default' })
-      });
+      const r = await fetch('/api/regenerate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ charId:this.current, model:this.model, userName:'default' }) });
       const d = await r.json();
       if (d.reply) { this.ch.push({ text:d.reply, isSelf:false, timestamp:Date.now() }); this.render(); }
     } catch(e) {}
@@ -188,12 +153,10 @@ const PrivateChat = {
   async fetchReply(id) {
     this.streaming = true;
     const i = document.getElementById('pi'), s = document.getElementById('ps');
-    if(i) i.disabled=true; if(s) s.disabled=true;
+    if(i) { i.disabled=true; s.disabled=true; }
     try {
-      const r = await fetch('/api/chat', {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ charId:id, message:this.ch[this.ch.length-1].text, userName:'default', model:this.model, conversationCount:this.ch.length })
-      });
+      const r = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ charId:id, message:this.ch[this.ch.length-1].text, userName:'default', model:this.model, conversationCount:this.ch.length }) });
       const d = await r.json();
       if (d.reply) { this.ch.push({ text:d.reply, isSelf:false, timestamp:Date.now() }); this.render(); }
       if (d.profile) {
@@ -203,24 +166,18 @@ const PrivateChat = {
         if (old.respect !== d.profile.respect && d.profile.respect > 0) deltas.push(`尊重+${d.profile.respect - (old.respect||0)}`);
         if (old.closeness !== d.profile.closeness && d.profile.closeness > 0) deltas.push(`亲密+${d.profile.closeness - (old.closeness||0)}`);
         if (old.dependency !== d.profile.dependency && d.profile.dependency > 0) deltas.push(`依赖+${d.profile.dependency - (old.dependency||0)}`);
-        if (deltas.length > 0) this.showGrowthToast(deltas);
-        this.profiles[id] = d.profile;
-        this.sidebar();
+        if (deltas.length > 0) {
+          const existing = document.querySelector('.growth-delta'); if (existing) existing.remove();
+          const toast = document.createElement('div'); toast.className = 'growth-delta'; toast.innerHTML = deltas.join(' ');
+          document.body.appendChild(toast); setTimeout(() => toast.remove(), 3500);
+        }
+        this.profiles[id] = d.profile; this.sidebar();
       }
     } catch(e) {}
     this.streaming = false;
-    if(i) i.disabled=false; if(s) s.disabled=false; if(i) i.focus();
-  },
-
-  showGrowthToast(deltas) {
-    const existing = document.querySelector('.growth-delta');
-    if (existing) existing.remove();
-    const toast = document.createElement('div');
-    toast.className = 'growth-delta';
-    toast.innerHTML = deltas.join(' ');
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3500);
-  },
-
-  e(s) { if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+    if(i) { i.disabled=false; s.disabled=false; i.focus(); }
+  }
 };
+window.LZPrivate = PC;
+window.PrivateChat = PC;
+})();

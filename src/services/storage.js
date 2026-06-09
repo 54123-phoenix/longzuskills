@@ -5,6 +5,10 @@ const path = require('path');
 const DB_FILE = path.join(__dirname, '..', 'data.db');
 
 let db;
+let writeCount = 0;
+let flushTimer = null;
+const FLUSH_INTERVAL = 3000;
+const FLUSH_THRESHOLD = 10;
 
 async function init() {
   const SQL = await initSqlJs();
@@ -18,25 +22,34 @@ async function init() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_pm ON private_msgs(char_id, user_id, created_at)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_gm ON group_msgs(created_at)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_mem ON memories(char_id, user_id, key)`);
-  if (!exists) save();
+  if (!exists) flushImmediate();
 }
 
-function save() { fs.writeFileSync(DB_FILE, Buffer.from(db.export())); }
+function flushImmediate() {
+  clearTimeout(flushTimer);
+  fs.writeFileSync(DB_FILE, Buffer.from(db.export()));
+  writeCount = 0;
+}
+
+function scheduleFlush() {
+  writeCount++;
+  if (writeCount >= FLUSH_THRESHOLD) {
+    clearTimeout(flushTimer);
+    flushImmediate();
+  } else if (!flushTimer) {
+    flushTimer = setTimeout(flushImmediate, FLUSH_INTERVAL);
+  }
+}
+
+function save() { scheduleFlush(); }
 
 function run(sql, params) { const r = db.run(sql, params); return r; }
 function all(sql, params) {
-  try {
-    const stmt = db.prepare(sql);
-    return params ? stmt.all(params) : stmt.all();
-  } catch(e) { return []; }
+  try { const stmt = db.prepare(sql); return params ? stmt.all(params) : stmt.all(); }
+  catch(e) { return []; }
 }
-function exec(sql) {
-  try { return db.exec(sql); } catch(e) { return []; }
-}
-function get(sql, params) {
-  const rows = all(sql, params);
-  return rows.length > 0 ? rows[0] : null;
-}
+function exec(sql) { try { return db.exec(sql); } catch(e) { return []; } }
+function get(sql, params) { const rows = all(sql, params); return rows.length > 0 ? rows[0] : null; }
 function quote(s) { return s.replace(/'/g, "''"); }
 
-module.exports = { init, save, run, all, exec, get, quote };
+module.exports = { init, save, run, all, exec, get, quote, flushImmediate };

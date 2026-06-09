@@ -20,8 +20,8 @@ router.post('/chat', async (req, res) => {
   const hist = memory.getHistory(charId, uid, 10).map(m => ({ role: m.is_self ? 'user' : 'assistant', content: m.text }));
   const msgs = [{ role: 'system', content: sysPrompt }, ...hist, { role: 'user', content: message }];
 
-  const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.85, maxTokens: 250 });
-  const replyText = reply || '……';
+  const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.85, maxTokens: 250, retries: 2 });
+  const replyText = memory.enforceConstraints(charId, reply) || '……';
   memory.saveMessage(charId, uid, false, replyText);
 
   // Analyze message and update multi-dimensional profile
@@ -69,8 +69,8 @@ router.post('/regenerate', async (req, res) => {
   const newHist = memory.getHistory(charId, uid, 10).map(m => ({ role: m.is_self ? 'user' : 'assistant', content: m.text }));
   const msgs = [{ role: 'system', content: sysPrompt }, ...newHist];
 
-  const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.9, maxTokens: 250 });
-  const replyText = reply || '……';
+  const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.9, maxTokens: 250, retries: 2 });
+  const replyText = memory.enforceConstraints(charId, reply) || '……';
   memory.saveMessage(charId, uid, false, replyText);
   res.json({ reply: replyText });
 });

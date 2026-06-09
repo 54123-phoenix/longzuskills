@@ -5,17 +5,50 @@ let apiKey;
 function init(key) { apiKey = key; }
 
 async function call(messages, options = {}) {
-  const { model = 'qwen-plus', temperature = 0.85, maxTokens = 250 } = options;
-  try {
-    const r = await fetch(AI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
-      body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature })
-    });
-    if (!r.ok) return null;
-    const d = await r.json();
-    return d.choices?.[0]?.message?.content?.trim() || null;
-  } catch (e) { return null; }
+  const { model = 'qwen-plus', temperature = 0.85, maxTokens = 250, retries = 2 } = options;
+  let lastError = null;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const r = await fetch(AI_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ model, messages, max_tokens: maxTokens, temperature }),
+        signal: AbortSignal.timeout(25000)
+      });
+
+      if (!r.ok) {
+        if (r.status === 429 || r.status >= 500) {
+          lastError = new Error(`API ${r.status}`);
+          if (attempt < retries) {
+            await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+            continue;
+          }
+        }
+        return null;
+      }
+
+      const d = await r.json();
+      const content = d.choices?.[0]?.message?.content?.trim();
+      return content || null;
+
+    } catch (e) {
+      lastError = e;
+      if (e.name === 'TimeoutError' || e.name === 'AbortError') {
+        if (attempt < retries) {
+          console.log(`AI retry ${attempt + 1}/${retries} after timeout`);
+          await new Promise(r => setTimeout(r, 800 * Math.pow(2, attempt)));
+          continue;
+        }
+      }
+      if (attempt < retries) {
+        await new Promise(r => setTimeout(r, 500 * Math.pow(2, attempt)));
+        continue;
+      }
+    }
+  }
+  if (lastError) console.error(`AI call failed after ${retries + 1} attempts: ${lastError.message}`);
+  return null;
 }
 
 async function extractMemories(messages) {

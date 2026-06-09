@@ -1,4 +1,5 @@
-const UserProfile = {
+(function() {
+const UP = {
   _data: null,
   default: { nickname: '龙族新兵', avatar: '🐉', color: '#7b68ee' },
   load() {
@@ -15,7 +16,7 @@ const UserProfile = {
     if (!c) return;
     c.innerHTML = `<div class="user-profile-avatar" style="background:${p.color}">${p.avatar}</div>
       <div class="user-profile-info">
-        <div class="user-profile-name">${p.nickname}</div>
+        <div class="user-profile-name">${window.escHtml(p.nickname)}</div>
         <div class="user-profile-status">在线</div>
       </div>
       <div class="user-profile-edit">✏️</div>`;
@@ -28,7 +29,7 @@ const UserProfile = {
     o.innerHTML = `<div class="modal-content">
       <h2>设置个人资料</h2>
       <div class="form-group"><label>昵称</label>
-        <input type="text" id="pn" value="${p.nickname}" maxlength="12"></div>
+        <input type="text" id="pn" value="${window.escHtml(p.nickname)}" maxlength="12"></div>
       <div class="form-group"><label>头像</label>
         <div class="emoji-picker">
           ${['😀','😎','🐉','🌸','🍔','🗡️','✍️','🦊','🐱','🐼','🌟','🔥','💪','🎮','📚','🌙','☀️','🍀'].map(e =>
@@ -64,3 +65,5 @@ const UserProfile = {
     document.getElementById('pcancel').onclick = () => document.body.removeChild(o);
   }
 };
+window.UserProfile = UP;
+})();
