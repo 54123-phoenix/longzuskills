@@ -12,10 +12,9 @@ router.post('/chat', async (req, res) => {
 
   const profile = memory.getOrCreateProfile(charId, uid);
   profile.count++;
-  profile.intimacy = Math.min(100, Math.floor(profile.count * 2.5));
-  memory.updateProfile(charId, uid, profile.count, profile.intimacy);
   memory.saveMessage(charId, uid, true, message);
 
+  // Build messages for AI
   const memories = memory.getMemories(charId, uid, 15);
   const sysPrompt = prompts.buildCharPrompt(charId, uid, memories);
   const hist = memory.getHistory(charId, uid, 10).map(m => ({ role: m.is_self ? 'user' : 'assistant', content: m.text }));
@@ -25,13 +24,26 @@ router.post('/chat', async (req, res) => {
   const replyText = reply || '……';
   memory.saveMessage(charId, uid, false, replyText);
 
-  // Extract long-term memories from recent conversation
+  // Analyze message and update multi-dimensional profile
+  const deltas = memory.analyzeMessage(charId, message, replyText);
+  profile.trust = Math.min(100, profile.trust + deltas.trust);
+  profile.respect = Math.min(100, profile.respect + deltas.respect);
+  profile.closeness = Math.min(100, profile.closeness + deltas.closeness);
+  profile.dependency = Math.min(100, profile.dependency + deltas.dependency);
+  memory.updateProfile(charId, uid, profile);
+
+  // Extract long-term memories
   const recentTexts = hist.slice(-5).map(m => `${m.role === 'user' ? uid : charId}: ${m.content}`).join('\n');
   if (recentTexts) prompts.extractAndSaveMemories(charId, uid, [recentTexts]);
 
   res.json({
     reply: replyText,
-    intimacy: { level: profile.intimacy, label: characters.INTIMACY_LABELS(profile.intimacy), count: profile.count }
+    profile: {
+      count: profile.count,
+      trust: profile.trust, respect: profile.respect,
+      closeness: profile.closeness, dependency: profile.dependency,
+      labels: memory.dimLabels(profile)
+    }
   });
 });
 
@@ -80,7 +92,13 @@ router.get('/all-profiles', (req, res) => {
   const out = {};
   ids.forEach(id => {
     const p = memory.getOrCreateProfile(id, 'default');
-    out[id] = { count: p.count, intimacy: p.intimacy, label: characters.INTIMACY_LABELS(p.intimacy), last: p.last };
+    out[id] = {
+      count: p.count,
+      trust: p.trust, respect: p.respect,
+      closeness: p.closeness, dependency: p.dependency,
+      labels: memory.dimLabels(p),
+      last: p.last
+    };
   });
   res.json(out);
 });

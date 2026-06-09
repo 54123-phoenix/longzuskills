@@ -30,14 +30,16 @@ const PrivateChat = {
     if (!c) return;
     c.innerHTML = `<div class="sidebar-section-title">💬 私聊</div>
       ${Object.values(CHARACTERS).map(ch => {
-        const prof = this.profiles[ch.id] || { count: 0, intimacy: 0, label: '陌生人' };
+        const prof = this.profiles[ch.id] || { count:0, trust:0, respect:0, closeness:0, dependency:0, labels:['陌生人'] };
+        const top = [prof.trust, prof.closeness, prof.respect, prof.dependency];
+        const score = Math.floor(top.reduce((a,b)=>a+b,0)/4);
         return `<div class="private-chat-item ${this.current===ch.id?'active':''}" data-c="${ch.id}">
           <div class="private-chat-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div class="private-chat-info">
             <div class="private-chat-name">${ch.name}
-              <span style="font-size:10px;color:${prof.intimacy>50?'#e8739a':prof.intimacy>10?'#f5a623':'#999'};margin-left:4px">${prof.label}</span>
+              <span style="font-size:10px;color:${score>50?'#e8739a':score>20?'#f5a623':'#999'};margin-left:4px">${prof.labels[0]||'...'}</span>
             </div>
-            <div class="private-chat-preview">${prof.count>0?prof.count+'轮  ♥'+prof.intimacy:'点击开始'}</div>
+            <div class="private-chat-preview">${prof.count>0?prof.count+'轮 · 均'+score:'点击开始'}</div>
           </div>
         </div>`;
       }).join('')}
@@ -50,7 +52,25 @@ const PrivateChat = {
     const ch = CHARACTERS[id]; if (!ch) return;
     await this.loadHistory(id);
     this.ch = this.histories[id] || [];
-    const prof = this.profiles[id] || { count:0, intimacy:0, label:'陌生人' };
+    const prof = this.profiles[id] || { count:0, trust:0, respect:0, closeness:0, dependency:0, labels:['陌生人'] };
+    const score = Math.floor((prof.trust+prof.respect+prof.closeness+prof.dependency)/4);
+    const dims = [
+      { k:'信任', v:prof.trust, h:'透露秘密' },
+      { k:'尊重', v:prof.respect, h:'认可观点' },
+      { k:'亲密', v:prof.closeness, h:'主动交谈' },
+      { k:'依赖', v:prof.dependency, h:'寻求帮助' }
+    ];
+    const dimHTML = dims.map(d =>
+      `<div style="margin:4px 0;display:flex;align-items:center;gap:8px;font-size:11px">
+        <span style="width:32px;color:var(--text-light)">${d.k}</span>
+        <div style="flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden">
+          <div style="width:${d.v}%;height:100%;background:var(--primary);transition:width 0.5s"></div>
+        </div>
+        <span style="width:28px;text-align:right;color:var(--text-dim)">${d.v}</span>
+        <span style="font-size:10px;color:var(--text-light)">${d.v>=80?d.h:d.v>=30?'进行中':'未触发'}</span>
+      </div>`
+    ).join('');
+
     const main = document.getElementById('main-content');
     main.innerHTML = `<div class="private-chat-container">
       <div class="private-chat-header">
@@ -58,7 +78,7 @@ const PrivateChat = {
           <div class="private-chat-header-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div>
             <div class="private-chat-header-name">${ch.name}
-              <span style="font-size:12px;color:#999;margin-left:6px">${prof.label}·♥${prof.intimacy}</span>
+              <span style="font-size:12px;color:#999;margin-left:6px">${prof.labels.join('·')||'陌生人'} · ${prof.count}轮</span>
             </div>
           </div>
         </div>
@@ -72,12 +92,13 @@ const PrivateChat = {
           <button class="btn btn-secondary btn-sm" id="nc">🔄 新</button>
         </div>
       </div>
+      <div class="private-chat-dims" style="padding:8px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)">${dimHTML}</div>
       <div class="private-chat-messages" id="pm">
         ${this.ch.length===0 ? `<div class="private-chat-welcome">
           <div class="welcome-avatar" style="background:${ch.color}">${ch.emoji}</div>
           <div class="welcome-text">和 ${ch.name} 对话</div>
-          <div class="private-chat-stats">${prof.label} · 已聊${prof.count}轮</div>
-          <div class="intimacy-bar"><div class="intimacy-fill" style="width:${prof.intimacy}%"></div></div>
+          <div class="private-chat-stats">均分${score} · ${prof.labels.join(',')}</div>
+          <div class="intimacy-bar"><div class="intimacy-fill" style="width:${score}%"></div></div>
         </div>` : ''}
       </div>
       <div class="chat-input-area"><div class="chat-input-wrapper">
@@ -173,7 +194,7 @@ const PrivateChat = {
       });
       const d = await r.json();
       if (d.reply) { this.ch.push({ text:d.reply, isSelf:false, timestamp:Date.now() }); this.render(); }
-      if (d.intimacy) { this.profiles[id]=d.intimacy; this.sidebar(); }
+      if (d.profile) { this.profiles[id] = d.profile; this.sidebar(); }
     } catch(e) {}
     this.streaming = false;
     if(i) i.disabled=false; if(s) s.disabled=false; if(i) i.focus();
