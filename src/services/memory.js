@@ -261,6 +261,17 @@ function getPromptQuotes(charId) {
   return storage.all('SELECT text, context FROM dialogue_quotes WHERE char_id=? AND importance>=7 ORDER BY RANDOM() LIMIT 3', [charId]);
 }
 
+function addCharEvent(charId, eventName, description, impact, period, importance) {
+  storage.run('INSERT INTO character_events (char_id, event_name, description, impact, period, importance) VALUES (?,?,?,?,?,?)', [charId, eventName, description, impact||'', period||'', importance||5]);
+  storage.save();
+}
+function getCharEvents(charId, limit) {
+  return storage.all('SELECT event_name, description, impact, period, importance FROM character_events WHERE char_id=? ORDER BY importance DESC LIMIT ?', [charId, limit||50]);
+}
+function getPromptEvents(charId) {
+  return storage.all('SELECT event_name, description, impact FROM character_events WHERE char_id=? AND importance>=7 ORDER BY RANDOM() LIMIT 2', [charId]);
+}
+
 function analyzeCharState(charId, userMessage, charReply) {
   const s = { moodDelta: 0, stressDelta: 0, energyDelta: 0, favorDelta: 0 };
   if (/(加油|很棒|厉害|佩服|崇拜|喜欢|谢谢|感谢)/.test(userMessage)) { s.moodDelta=1; s.energyDelta=3; s.favorDelta=2; }
@@ -281,5 +292,6 @@ module.exports = {
   recordRelationEvent, getRelationEvents,
   getCharState, updateCharState, analyzeCharState,
   setBelief, getBeliefs,
-  addQuote, getQuotes, getPromptQuotes
+  addQuote, getQuotes, getPromptQuotes,
+  addCharEvent, getCharEvents, getPromptEvents
 };

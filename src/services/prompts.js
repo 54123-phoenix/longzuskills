@@ -87,7 +87,16 @@ function buildCharPrompt(charId, userId, memories) {
     quoteSection = `\n\n【原著语气参考】以下是${ch.name}在原著中说过的类似的话，请严格模仿其语气和措辞：\n${lines}`;
   }
 
-  return `${ch.system}${quoteSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
+  let eventSection = '';
+  const charEvents = memory.getPromptEvents(charId);
+  if (charEvents && charEvents.length > 0) {
+    const lines = charEvents.map(e =>
+      `- 【${e.event_name}】${e.description}。影响: ${e.impact}`
+    ).join('\n');
+    eventSection = `\n\n【你的重要经历】当对话涉及相关话题时，可以自然地回忆这些经历：\n${lines}`;
+  }
+
+  return `${ch.system}${quoteSection}${eventSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
