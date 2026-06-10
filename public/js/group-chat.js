@@ -34,15 +34,22 @@ const G = {
   renderMsgs() {
     const c = document.getElementById('gm'); if (!c) return;
     const e = window.escHtml;
+    const UP = window.UserProfile;
     c.innerHTML = this.messages.map(m => {
       if (m.type === 'system') return `<div class="message-system">${e(m.text)}</div>`;
+      const selfAvatar = UP.isImageAvatar(UP.get().avatar)
+        ? `<div class="message-avatar" style="background:${m.color||'#999'}"><img src="${e(UP.get().avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px"></div>`
+        : `<div class="message-avatar" style="background:${m.color||'#999'}">${m.avatar||'👤'}</div>`;
+      const otherAvatar = m.avatar && (m.avatar.startsWith('/uploads/') || m.avatar.startsWith('data:image/'))
+        ? `<div class="message-avatar" style="background:${m.color||'#999'}"><img src="${e(m.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:8px"></div>`
+        : `<div class="message-avatar" style="background:${m.color||'#999'}">${m.avatar||'👤'}</div>`;
       return `<div class="message ${m.isSelf ? 'message-self' : 'message-other'}">
-        ${!m.isSelf ? `<div class="message-avatar" style="background:${m.color||'#999'}">${m.avatar||'👤'}</div>` : ''}
+        ${!m.isSelf ? otherAvatar : ''}
         <div class="message-body">
           ${!m.isSelf ? `<div class="message-name">${e(m.name||'')}</div>` : ''}
           <div class="message-bubble ${m.isSelf?'bubble-self':'bubble-other'}">${e(m.text)}</div>
         </div>
-        ${m.isSelf ? `<div class="message-avatar" style="background:${m.color||'#999'}">${m.avatar||'👤'}</div>` : ''}
+        ${m.isSelf ? selfAvatar : ''}
       </div>`;
     }).join('');
     c.scrollTop = c.scrollHeight;
@@ -93,6 +100,8 @@ const G = {
       await new Promise(r => setTimeout(r, 30));
     }
   },
+
+  bindEvents() {
     if (!this.socket) return;
     this.socket.on('gm', msg => { if (!msg.isSelf) { this.messages.push(msg); this.renderMsgs(); } });
     this.socket.on('on', d => { const e = document.getElementById('goc'); if (e) e.textContent = d.c + '人在线'; });

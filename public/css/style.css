@@ -1000,7 +1000,40 @@ body { background: var(--bg); color: var(--text); }
   animation: avatarPulse 1.5s ease-in-out;
 }
 
-/* ========== Growth Delta Toast ========== */
+/* Background support */
+body.bg-image {
+  background-size: cover;
+  background-attachment: fixed;
+  background-position: center;
+}
+
+.main-content.has-bg {
+  background: rgba(255,255,255,0.85) !important;
+  backdrop-filter: blur(8px);
+}
+
+.dark .main-content.has-bg {
+  background: rgba(18,18,30,0.88) !important;
+}
+
+.chat-messages.has-bg {
+  background: transparent !important;
+}
+
+.private-chat-messages.has-bg {
+  background: transparent !important;
+}
+
+.upload-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 14px; border: 1px dashed var(--border); border-radius: 8px;
+  font-size: 12px; color: var(--primary); cursor: pointer;
+  transition: all 0.15s; background: transparent;
+}
+.upload-btn:hover { border-color: var(--primary); background: rgba(123,104,238,0.05); }
+
+.user-profile-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
 .growth-delta {
   display: inline-flex; gap: 6px; padding: 4px 10px;
   border-radius: 12px; font-size: 11px;

@@ -1,9 +1,10 @@
 (function() {
 let socket = null;
 
-document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {
   const UP = window.UserProfile;
   UP.load(); UP.render();
+  window.applyBackground();
 
   if (localStorage.getItem('dark')==='1') document.body.classList.add('dark');
   const tm = document.getElementById('theme-btn');
