@@ -69,4 +69,13 @@ async function extractEpisodes(messages) {
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
-module.exports = { init, call, extractMemories, extractEpisodes };
+async function extractBeliefs(messages) {
+  const msgs = [
+    { role: 'system', content: '从对话中提取用户的核心信念和价值观。信念是用户反复表达的深层原则、人生哲学、自我认知。不要提取表面偏好，要提取反映人格的原则。类别: 价值观(人生原则)、自我认知(如何看待自己)、世界观(如何看待世界)、偏好(深层倾向)、恐惧(害怕什么)。返回JSON数组: [{"belief":"信念描述","category":"类别","confidence":0.1-1.0}]。最多5条。只提取明确表达的信念。' },
+    { role: 'user', content: messages.join('\n') }
+  ];
+  const res = await call(msgs, { model: 'qwen-plus', temperature: 0.2, maxTokens: 400 });
+  try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
+}
+
+module.exports = { init, call, extractMemories, extractEpisodes, extractBeliefs };

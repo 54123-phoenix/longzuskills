@@ -40,6 +40,14 @@ function buildCharPrompt(charId, userId, memories) {
     }
   }
 
+  let beliefSection = '';
+  const beliefs = memory.getBeliefs(charId, userId, 8);
+  if (beliefs && beliefs.length > 0) {
+    const catMap = { '价值观': '💡', '自我认知': '🪞', '世界观': '🌍', '偏好': '❤️', '恐惧': '😨' };
+    const lines = beliefs.map(b => `- ${catMap[b.category]||''} ${b.belief} (确信:${Math.floor(b.confidence*100)}%)`).join('\n');
+    beliefSection = `\n\n【对${userId}的理解】\n${lines}`;
+  }
+
   let memSection = '';
   if (memories && memories.length > 0) {
     const memLines = memories.filter(m => m.confidence > 0.3).slice(0, 10).map(m => `- ${m.key}: ${m.value} (确信度:${Math.floor(m.confidence*100)}%)`).join('\n');
@@ -70,7 +78,7 @@ function buildCharPrompt(charId, userId, memories) {
     stateSection = `\n\n【你当前的状态】\n心情: ${moodEmoji}${st.mood} | 压力: ${'█'.repeat(Math.floor(st.stress/10))} | 精力: ${'█'.repeat(Math.floor(st.energy/10))} | 好感: ${st.favor}/100${hintText}\n你的回复需自然反映当前状态。`;
   }
 
-  return `${ch.system}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${memSection}${relSection}`;
+  return `${ch.system}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
@@ -120,4 +128,15 @@ async function extractAndSaveEpisodes(charId, userId, recentMessages) {
   } catch (e) { /* episode extraction is best-effort */ }
 }
 
-module.exports = { buildCharPrompt, buildGroupPrompt, extractAndSaveMemories, extractAndSaveEpisodes };
+async function extractAndSaveBeliefs(charId, userId, recentMessages) {
+  try {
+    const beliefs = await ai.extractBeliefs(recentMessages);
+    for (const b of beliefs) {
+      if (b.belief && b.confidence > 0.3) {
+        memory.setBelief(charId, userId, b.belief, b.category || '价值观', b.confidence);
+      }
+    }
+  } catch (e) { /* best-effort */ }
+}
+
+module.exports = { buildCharPrompt, buildGroupPrompt, extractAndSaveMemories, extractAndSaveEpisodes, extractAndSaveBeliefs };

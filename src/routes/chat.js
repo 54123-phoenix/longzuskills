@@ -70,6 +70,7 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   const shouldExtract = recentTexts && profile.count % MEMORY_EXTRACT_INTERVAL === 0;
   if (shouldExtract) {
     prompts.extractAndSaveEpisodes(charId, uid, [recentTexts]);
+    prompts.extractAndSaveBeliefs(charId, uid, [recentTexts]);
     prompts.extractAndSaveMemories(charId, uid, [recentTexts]);
   }
 

@@ -184,6 +184,17 @@ function getRecentEpisodes(charId, userId, days) {
     .map(r => ({ event: r.event, reason: r.reason, emotion: r.emotion, importance: r.importance, created_at: r.created_at }));
 }
 
+function setBelief(charId, userId, belief, category, confidence) {
+  const exist = storage.get('SELECT id FROM beliefs WHERE char_id=? AND user_id=? AND belief=?', [charId, userId || 'default', belief]);
+  if (exist) { storage.run('UPDATE beliefs SET category=?, confidence=?, updated_at=? WHERE id=?', [category || '价值观', confidence || 0.5, Date.now(), exist.id]); }
+  else { storage.run('INSERT INTO beliefs (char_id, user_id, belief, category, confidence, source, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)', [charId, userId || 'default', belief, category || '价值观', confidence || 0.5, 'chat', Date.now(), Date.now()]); }
+  storage.save();
+}
+
+function getBeliefs(charId, userId, limit) {
+  return storage.all('SELECT belief, category, confidence FROM beliefs WHERE char_id=? AND user_id=? ORDER BY confidence DESC LIMIT ?', [charId, userId || 'default', limit || 8]);
+}
+
 function timeLabel(ts) {
   const diff = Date.now() - ts;
   const mins = Math.floor(diff / 60000);
@@ -226,6 +237,17 @@ function updateCharState(charId, userId, updates) {
   storage.save();
 }
 
+function setBelief(charId, userId, belief, category, confidence) {
+  const exist = storage.get('SELECT id FROM beliefs WHERE char_id=? AND user_id=? AND belief=?', [charId, userId || 'default', belief]);
+  if (exist) { storage.run('UPDATE beliefs SET category=?, confidence=?, updated_at=? WHERE id=?', [category || '价值观', confidence || 0.5, Date.now(), exist.id]); }
+  else { storage.run('INSERT INTO beliefs (char_id, user_id, belief, category, confidence, created_at, updated_at) VALUES (?,?,?,?,?,?,?)', [charId, userId || 'default', belief, category || '价值观', confidence || 0.5, Date.now(), Date.now()]); }
+  storage.save();
+}
+
+function getBeliefs(charId, userId, limit) {
+  return storage.all('SELECT belief, category, confidence FROM beliefs WHERE char_id=? AND user_id=? ORDER BY confidence DESC LIMIT ?', [charId, userId || 'default', limit || 10]);
+}
+
 function analyzeCharState(charId, userMessage, charReply) {
   const s = { moodDelta: 0, stressDelta: 0, energyDelta: 0, favorDelta: 0 };
   if (/(加油|很棒|厉害|佩服|崇拜|喜欢|谢谢|感谢)/.test(userMessage)) { s.moodDelta=1; s.energyDelta=3; s.favorDelta=2; }
@@ -244,5 +266,7 @@ module.exports = {
   saveGroupMsg, getGroupHistory, cleanupGroup,
   setEpisode, getEpisodes, getRecentEpisodes, timeLabel,
   recordRelationEvent, getRelationEvents,
-  getCharState, updateCharState, analyzeCharState
+  getCharState, updateCharState, analyzeCharState,
+  setBelief, getBeliefs,
+  setBelief, getBeliefs
 };
