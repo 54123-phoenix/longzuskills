@@ -1,7 +1,7 @@
 const express = require('express');
 const http = require('http');
 const path = require('path');
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const storage = require('./src/services/storage');
 const ai = require('./src/services/ai');
@@ -24,7 +24,9 @@ app.use((req, res, next) => {
 });
 
 // Init AI
-ai.init(process.env.DASHSCOPE_API_KEY);
+const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DASHSCOPE_API_KEY;
+if (!apiKey) console.warn('⚠ No API key found — set DEEPSEEK_API_KEY in .env');
+ai.init(apiKey);
 
 // Static
 app.use(express.static(path.join(__dirname, 'public')));

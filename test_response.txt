@@ -1,0 +1,1 @@
+﻿{"reply":"呃…那个，你好？我是路明非。你是哪位啊？","profile":{"count":1,"trust":0,"respect":0,"closeness":0,"dependency":0,"labels":["陌生人"]}}

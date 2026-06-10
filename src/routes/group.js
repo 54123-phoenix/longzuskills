@@ -26,8 +26,12 @@ router.post('/group-chat', async (req, res) => {
     });
     msgs.push({ role: 'user', content: message });
     const reply = await ai.call(msgs, { model: 'deepseek-chat', temperature: 0.9, maxTokens: 200, retries: 3 });
-    return reply && reply.length > 1
-      ? { charId: id, name: characters.getMeta(id).n, text: memory.enforceConstraints(id, reply).substring(0, 100) }
+    if (ai.isQuotaError(reply) || ai.isApiError(reply)) {
+      console.error(`Group AI failed for ${id}: ${reply.message}`);
+    }
+    const replyStr = typeof reply === 'string' ? reply : '';
+    return replyStr && replyStr.length > 1
+      ? { charId: id, name: characters.getMeta(id).n, text: memory.enforceConstraints(id, replyStr).substring(0, 100) }
       : null;
   });
 
