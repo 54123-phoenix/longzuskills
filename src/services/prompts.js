@@ -13,6 +13,16 @@ function buildCharPrompt(charId, userId, memories) {
     dimSection = `\n\n【关系维度】\n信任:${'█'.repeat(Math.floor(p.trust/5))} (${p.trust}%) - ${p.trust >= 80 ? '会透露秘密' : p.trust >= 30 ? '开始坦诚' : '保持戒备'}\n尊重:${'█'.repeat(Math.floor(p.respect/5))} (${p.respect}%) - ${p.respect >= 80 ? '认可你的判断' : p.respect >= 30 ? '会考虑你的意见' : '不屑一顾'}\n亲密:${'█'.repeat(Math.floor(p.closeness/5))} (${p.closeness}%) - ${p.closeness >= 80 ? '主动找你说话' : p.closeness >= 30 ? '不排斥你' : '保持距离'}\n依赖:${'█'.repeat(Math.floor(p.dependency/5))} (${p.dependency}%) - ${p.dependency >= 80 ? '有困难会找你' : p.dependency >= 30 ? '偶尔求助' : '独自承担'}`;
   }
 
+  let relEventSection = '';
+  const dimNameMap = { trust: '信任', respect: '尊重', closeness: '亲密', dependency: '依赖' };
+  const relEvents = memory.getRelationEvents(charId, userId, 5);
+  if (relEvents && relEvents.length > 0) {
+    const lines = relEvents.map(e =>
+      `- ${dimNameMap[e.dimension] || e.dimension}${e.change > 0 ? '+' : ''}${e.change}: ${e.reason}`
+    ).join('\n');
+    relEventSection = `\n\n【最近关系变化】\n${lines}`;
+  }
+
   let episSection = '';
   const episodes = memory.getEpisodes(charId, userId, 10);
   if (episodes && episodes.length > 0) {
@@ -38,7 +48,7 @@ function buildCharPrompt(charId, userId, memories) {
     if (relLines) relSection = `\n\n【与其他角色的关系】\n${relLines}`;
   }
 
-  return `${ch.system}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${episSection}${memSection}${relSection}`;
+  return `${ch.system}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {

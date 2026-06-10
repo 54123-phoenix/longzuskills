@@ -24,6 +24,8 @@ async function init() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_gm ON group_msgs(created_at)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_mem ON memories(char_id, user_id, key)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_ep ON episodes(char_id, user_id, created_at)`);
+  db.run(`CREATE TABLE IF NOT EXISTS relationship_events ( id INTEGER PRIMARY KEY AUTOINCREMENT, char_id TEXT NOT NULL, user_id TEXT NOT NULL DEFAULT 'default', dimension TEXT NOT NULL, change INTEGER NOT NULL DEFAULT 0, reason TEXT DEFAULT '', created_at INTEGER DEFAULT 0)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_rel_evt ON relationship_events(char_id, user_id, created_at)`);
   if (!exists) flushImmediate();
 }
 

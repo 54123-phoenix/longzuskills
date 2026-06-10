@@ -182,11 +182,21 @@ function getEpisodes(charId, userId, limit) {
   return rows;
 }
 
+function recordRelationEvent(charId, userId, dimension, change, reason) {
+  storage.run('INSERT INTO relationship_events (char_id, user_id, dimension, change, reason, created_at) VALUES (?,?,?,?,?,?)', [charId, userId || 'default', dimension, change || 0, reason || '', Date.now()]);
+  storage.save();
+}
+
+function getRelationEvents(charId, userId, limit) {
+  return storage.all('SELECT dimension, change, reason, created_at FROM relationship_events WHERE char_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?', [charId, userId || 'default', limit || 10]);
+}
+
 module.exports = {
   getOrCreateProfile, updateProfile, dimLabels, analyzeMessage, enforceConstraints, keywordFallback,
   saveMessage, getHistory, getHistoryTotal, deleteHistory,
   setMemory, getMemories, getAllMemories,
   setRelation, getRelations,
   saveGroupMsg, getGroupHistory, cleanupGroup,
-  setEpisode, getEpisodes
+  setEpisode, getEpisodes,
+  recordRelationEvent, getRelationEvents
 };

@@ -6,6 +6,17 @@ const prompts = require('../services/prompts');
 const ai = require('../services/ai');
 const { rateLimit } = require('../middleware/rateLimit');
 
+function buildRelReason(dim, change, message) {
+  const short = message.length > 20 ? message.substring(0, 20) + '…' : message;
+  const reasons = {
+    trust: `主动分享: "${short}"`,
+    respect: `认真讨论: "${short}"`,
+    closeness: `日常交流: "${short}"`,
+    dependency: `寻求帮助: "${short}"`
+  };
+  return reasons[dim] || `${short}`;
+}
+
 const MEMORY_EXTRACT_INTERVAL = 5;
 
 router.post('/chat', rateLimit(20, 60000), async (req, res) => {
@@ -28,6 +39,13 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   memory.saveMessage(charId, uid, false, replyText);
 
   const deltas = memory.keywordFallback(message);
+  const dimNames = { trust: '信任', respect: '尊重', closeness: '亲密', dependency: '依赖' };
+  for (const [dim, val] of Object.entries(deltas)) {
+    if (val !== 0) {
+      const reason = buildRelReason(dim, val, message);
+      memory.recordRelationEvent(charId, uid, dim, val, reason);
+    }
+  }
   profile.trust = Math.min(100, profile.trust + deltas.trust);
   profile.respect = Math.min(100, profile.respect + deltas.respect);
   profile.closeness = Math.min(100, profile.closeness + deltas.closeness);
