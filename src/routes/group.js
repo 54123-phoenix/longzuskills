@@ -11,8 +11,14 @@ router.post('/group-chat', async (req, res) => {
 
   memory.saveGroupMsg({ name: uid, avatar: '👤', color: '#999', text: message, isSelf: true, type: 'user' });
 
+  // 角色回复概率：模拟真实群聊，不是每个人都插嘴
+  const replyChance = { hly: 0.60, fge: 0.80, czh: 0.30, lmf: 0.50, jn: 0.45 };
   const ids = characters.getIds();
-  const tasks = ids.map(async (id, i) => {
+  const selected = ids.filter(id => Math.random() < (replyChance[id] || 0.5));
+  // 保底：至少 2 人回复（但不能全沉默）
+  const pool = selected.length >= 1 ? selected : ids.sort(() => Math.random() - 0.5).slice(0, 2);
+
+  const tasks = pool.map(async (id, i) => {
     if (i > 0) await new Promise(r => setTimeout(r, 200));
     const sysPrompt = prompts.buildGroupPrompt(id, uid);
     const msgs = [{ role: 'system', content: sysPrompt }];
