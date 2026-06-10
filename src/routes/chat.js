@@ -52,6 +52,19 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   profile.dependency = Math.min(100, profile.dependency + deltas.dependency);
   memory.updateProfile(charId, uid, profile);
 
+  // 更新角色内心状态
+  const charState = memory.getCharState(charId, uid);
+  // 时间恢复: 精力过低时自动恢复一些
+  if (charState.energy < 10) charState.energy = Math.min(100, charState.energy + 20);
+  if (charState.stress > 80) charState.stress = Math.max(0, charState.stress - 5);
+  const stateDelta = memory.analyzeCharState(charId, message, replyText);
+  memory.updateCharState(charId, uid, {
+    mood: stateDelta.moodDelta > 0 ? '开心' : stateDelta.moodDelta < 0 ? '低落' : '平静',
+    stress: Math.min(100, Math.max(0, charState.stress + stateDelta.stressDelta)),
+    energy: Math.min(100, Math.max(0, charState.energy + stateDelta.energyDelta)),
+    favor: Math.min(100, Math.max(0, charState.favor + stateDelta.favorDelta))
+  });
+
   // Extract long-term memories & episodes
   const recentTexts = hist.slice(-5).map(m => `${m.role === 'user' ? uid : charId}: ${m.content}`).join('\n');
   const shouldExtract = recentTexts && profile.count % MEMORY_EXTRACT_INTERVAL === 0;

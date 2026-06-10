@@ -207,6 +207,35 @@ function getRelationEvents(charId, userId, limit) {
   return storage.all('SELECT dimension, change, reason, created_at FROM relationship_events WHERE char_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?', [charId, userId || 'default', limit || 10]);
 }
 
+function getCharState(charId, userId) {
+  const u = userId || 'default';
+  let st = storage.get('SELECT mood, stress, energy, favor FROM character_state WHERE char_id=? AND user_id=?', [charId, u]);
+  if (st) return { mood: st.mood, stress: st.stress, energy: st.energy, favor: st.favor };
+  storage.run('INSERT OR IGNORE INTO character_state (char_id, user_id, mood, stress, energy, favor) VALUES (?,?,?,?,?,?)', [charId, u, '平静', 0, 80, 20]);
+  storage.save();
+  return { mood: '平静', stress: 0, energy: 80, favor: 20 };
+}
+
+function updateCharState(charId, userId, updates) {
+  const st = getCharState(charId, userId);
+  const mood = updates.mood || st.mood;
+  const stress = updates.stress != null ? updates.stress : st.stress;
+  const energy = updates.energy != null ? updates.energy : st.energy;
+  const favor = updates.favor != null ? updates.favor : st.favor;
+  storage.run('UPDATE character_state SET mood=?, stress=?, energy=?, favor=?, updated_at=? WHERE char_id=? AND user_id=?', [mood, stress, energy, favor, Date.now(), charId, userId || 'default']);
+  storage.save();
+}
+
+function analyzeCharState(charId, userMessage, charReply) {
+  const s = { moodDelta: 0, stressDelta: 0, energyDelta: 0, favorDelta: 0 };
+  if (/(加油|很棒|厉害|佩服|崇拜|喜欢|谢谢|感谢)/.test(userMessage)) { s.moodDelta=1; s.energyDelta=3; s.favorDelta=2; }
+  if (/(帮帮我|怎么办|好累|难过|不开心|压力|害怕|迷茫)/.test(userMessage)) { s.favorDelta=1; s.energyDelta=-2; s.stressDelta=2; }
+  if (/(烦|讨厌|滚|无语|气死|够了|闭嘴)/.test(userMessage)) { s.stressDelta=3; s.moodDelta=-1; }
+  if (/(今天|吃了|睡了|哈哈|日常|无聊|周末)/.test(userMessage)) { s.favorDelta=1; s.energyDelta=-1; }
+  if (charReply && charReply.length > 40) s.energyDelta -= 1;
+  return s;
+}
+
 module.exports = {
   getOrCreateProfile, updateProfile, dimLabels, analyzeMessage, enforceConstraints, keywordFallback,
   saveMessage, getHistory, getHistoryTotal, deleteHistory,
@@ -214,5 +243,6 @@ module.exports = {
   setRelation, getRelations,
   saveGroupMsg, getGroupHistory, cleanupGroup,
   setEpisode, getEpisodes, getRecentEpisodes, timeLabel,
-  recordRelationEvent, getRelationEvents
+  recordRelationEvent, getRelationEvents,
+  getCharState, updateCharState, analyzeCharState
 };

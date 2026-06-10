@@ -26,6 +26,7 @@ async function init() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_ep ON episodes(char_id, user_id, created_at)`);
   db.run(`CREATE TABLE IF NOT EXISTS relationship_events ( id INTEGER PRIMARY KEY AUTOINCREMENT, char_id TEXT NOT NULL, user_id TEXT NOT NULL DEFAULT 'default', dimension TEXT NOT NULL, change INTEGER NOT NULL DEFAULT 0, reason TEXT DEFAULT '', created_at INTEGER DEFAULT 0)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_rel_evt ON relationship_events(char_id, user_id, created_at)`);
+  db.run(`CREATE TABLE IF NOT EXISTS character_state (char_id TEXT NOT NULL, user_id TEXT NOT NULL DEFAULT 'default', mood TEXT DEFAULT '平静', stress INTEGER DEFAULT 0, energy INTEGER DEFAULT 80, favor INTEGER DEFAULT 20, updated_at INTEGER DEFAULT 0, PRIMARY KEY(char_id, user_id))`);
   if (!exists) flushImmediate();
 }
 

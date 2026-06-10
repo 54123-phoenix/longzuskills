@@ -57,7 +57,20 @@ function buildCharPrompt(charId, userId, memories) {
     if (relLines) relSection = `\n\n【与其他角色的关系】\n${relLines}`;
   }
 
-  return `${ch.system}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${memSection}${relSection}`;
+  let stateSection = '';
+  const st = memory.getCharState(charId, userId);
+  if (st) {
+    const moodMap = { '开心': '😊', '平静': '😐', '低落': '😔', '好奇': '🤔', '担心': '😟' };
+    const moodEmoji = moodMap[st.mood] || '';
+    const hints = [];
+    if (st.energy < 20) hints.push('精力很低，话会很少');
+    if (st.stress > 70) hints.push('压力很大，可能语气变冷');
+    if (st.favor > 70) hints.push('对对方很有好感，回应会更主动');
+    const hintText = hints.length > 0 ? '\n' + hints.map(h => `（${h}）`).join(' ') : '';
+    stateSection = `\n\n【你当前的状态】\n心情: ${moodEmoji}${st.mood} | 压力: ${'█'.repeat(Math.floor(st.stress/10))} | 精力: ${'█'.repeat(Math.floor(st.energy/10))} | 好感: ${st.favor}/100${hintText}\n你的回复需自然反映当前状态。`;
+  }
+
+  return `${ch.system}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
