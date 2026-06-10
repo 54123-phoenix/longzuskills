@@ -50,5 +50,6 @@ app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 // Start
 const PORT = process.env.PORT || 3000;
 storage.init().then(() => {
+  require('./src/services/seed').seedQuotes();
   server.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
 });

@@ -39,6 +39,8 @@ async function init() {
     updated_at INTEGER DEFAULT 0
   )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_bel ON beliefs(char_id, user_id, category)`);
+  db.run(`CREATE TABLE IF NOT EXISTS dialogue_quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, char_id TEXT NOT NULL, text TEXT NOT NULL, context TEXT DEFAULT '', chapter TEXT DEFAULT '', importance INTEGER DEFAULT 5)`);
+  db.run(`CREATE INDEX IF NOT EXISTS idx_dq ON dialogue_quotes(char_id)`);
   if (!exists) flushImmediate();
 }
 

@@ -248,6 +248,19 @@ function getBeliefs(charId, userId, limit) {
   return storage.all('SELECT belief, category, confidence FROM beliefs WHERE char_id=? AND user_id=? ORDER BY confidence DESC LIMIT ?', [charId, userId || 'default', limit || 10]);
 }
 
+function addQuote(charId, text, context, chapter, importance) {
+  storage.run('INSERT INTO dialogue_quotes (char_id, text, context, chapter, importance) VALUES (?,?,?,?,?)', [charId, text, context || '', chapter || '', importance || 5]);
+  storage.save();
+}
+
+function getQuotes(charId, limit) {
+  return storage.all('SELECT text, context, chapter, importance FROM dialogue_quotes WHERE char_id=? ORDER BY importance DESC LIMIT ?', [charId, limit || 50]);
+}
+
+function getPromptQuotes(charId) {
+  return storage.all('SELECT text, context FROM dialogue_quotes WHERE char_id=? AND importance>=7 ORDER BY RANDOM() LIMIT 3', [charId]);
+}
+
 function analyzeCharState(charId, userMessage, charReply) {
   const s = { moodDelta: 0, stressDelta: 0, energyDelta: 0, favorDelta: 0 };
   if (/(加油|很棒|厉害|佩服|崇拜|喜欢|谢谢|感谢)/.test(userMessage)) { s.moodDelta=1; s.energyDelta=3; s.favorDelta=2; }
@@ -268,5 +281,5 @@ module.exports = {
   recordRelationEvent, getRelationEvents,
   getCharState, updateCharState, analyzeCharState,
   setBelief, getBeliefs,
-  setBelief, getBeliefs
+  addQuote, getQuotes, getPromptQuotes
 };

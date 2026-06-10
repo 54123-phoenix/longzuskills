@@ -78,7 +78,16 @@ function buildCharPrompt(charId, userId, memories) {
     stateSection = `\n\n【你当前的状态】\n心情: ${moodEmoji}${st.mood} | 压力: ${'█'.repeat(Math.floor(st.stress/10))} | 精力: ${'█'.repeat(Math.floor(st.energy/10))} | 好感: ${st.favor}/100${hintText}\n你的回复需自然反映当前状态。`;
   }
 
-  return `${ch.system}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
+  let quoteSection = '';
+  const quotes = memory.getPromptQuotes(charId);
+  if (quotes && quotes.length > 0) {
+    const lines = quotes.map(q =>
+      `- "${q.text}"${q.context ? ' (' + q.context + ')' : ''}`
+    ).join('\n');
+    quoteSection = `\n\n【原著语气参考】以下是${ch.name}在原著中说过的类似的话，请严格模仿其语气和措辞：\n${lines}`;
+  }
+
+  return `${ch.system}${quoteSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
