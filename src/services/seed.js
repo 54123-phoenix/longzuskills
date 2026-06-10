@@ -102,4 +102,36 @@ function seedEvents() {
   console.log(`Seeded ${events.length} character events`);
 }
 
-module.exports = { seedQuotes, seedEvents };
+function seedLore() {
+  const count = storage.get('SELECT COUNT(*) as cnt FROM lore');
+  if (count && count.cnt > 0) {
+    console.log(`Seed skipped: ${count.cnt} lore entries already exist`);
+    return;
+  }
+
+  const lore = [
+    { topic: '混血种', content: '龙族与人类的混血后代，拥有龙族血统和言灵能力。分为S/A/B/C/D/E/F级。S级最为罕见和强大。卡塞尔学院专门培养混血种对抗龙王。', category: '世界观', importance: 8 },
+    { topic: '龙王', content: '龙族中的至高存在，分为四大君主(青铜与火、大地与山、海洋与水、天空与风)和双生龙王(黑王与白王)。龙王死后会以卵的形式复活。', category: '世界观', importance: 8 },
+    { topic: '言灵', content: '混血种通过龙血激活的超自然能力。每个言灵有独特效果，如君焰(火焰)、镰鼬(风刃)、时间零(时间减速)。言灵序列号越高越强。', category: '世界观', importance: 8 },
+    { topic: '卡塞尔学院', content: '位于美国芝加哥的混血种精英学院，表面是普通大学，实际培养屠龙者。下设执行部、狮心会、学生会、新闻部等。', category: '世界观', importance: 7 },
+    { topic: '尼伯龙根', content: '龙族创造的异空间，与现实世界平行。龙类可以在尼伯龙根中自由活动，人类进入后容易迷失。', category: '世界观', importance: 7 },
+    { topic: '白王', content: '四大君主之外的最强龙王，掌握精神力量。绘梨衣是白王的容器。白王与黑王是双生关系。', category: '世界观', importance: 9 },
+    { topic: '格陵兰事件', content: '芬格尔的前女友在格陵兰冰海执行任务时牺牲。芬格尔是唯一的幸存者。此后他以F级废柴身份潜伏，实际在暗中调查真相。', category: '事件', importance: 9 },
+    { topic: '高架桥之战', content: '楚子航15岁时，父亲楚天骄在高架桥上独自面对奥丁并牺牲。楚子航成为这一战的唯一目击者，从此走上守护者之路。', category: '事件', importance: 10 },
+    { topic: '夏弥真相', content: '楚子航在北京地铁中发现夏弥是龙王耶梦加得。两人一战，楚子航亲手杀死了她。这件事成为他心中最深的愧疚。', category: '事件', importance: 10 },
+    { topic: '路鸣泽(小魔鬼)', content: '路明非体内的另一个存在，自称路鸣泽。每次交易会取走路明非一部分生命，但给予他屠龙的力量。真实身份可能是黑王或黑王之卵。', category: '角色', importance: 8 },
+    { topic: '赫尔佐格', content: '表面上是一位德国医生，实际是策划了日本事件的黑手。他利用绘梨衣作为白王容器，最终被路明非杀死。极度狡猾和残忍。', category: '角色', importance: 8 },
+    { topic: '凯撒·加图索', content: '卡塞尔学院学生会会长，意大利加图索家族的继承人。性格骄傲但重视同伴。与楚子航是亦敌亦友的关系。', category: '角色', importance: 7 },
+    { topic: '诺诺(陈墨瞳)', content: '路明非的青梅竹马与初恋，是路明非进入卡塞尔的引路人。性格活泼开朗，对路明非有特殊意义。', category: '角色', importance: 7 },
+    { topic: '日本分部', content: '卡塞尔学院在日本的分支机构，表面是蛇岐八家控制的组织。路明非在这里遇见了绘梨衣。这里的混血种有独特的武士道文化。', category: '地点', importance: 7 },
+    { topic: '芝加哥卡塞尔本部', content: '学院本部位于芝加哥郊外，建筑风格古典。拥有图书馆、训练场、英灵殿等设施。', category: '地点', importance: 7 },
+    { topic: '北京尼伯龙根', content: '位于北京地铁系统下方的一个大型尼伯龙根，是耶梦加得的领地。楚子航和路明非在这里经历了与夏弥的决战。', category: '地点', importance: 8 }
+  ];
+
+  for (const l of lore) {
+    memory.addLore(l.topic, l.content, l.category, l.importance);
+  }
+  console.log(`Seeded ${lore.length} lore entries`);
+}
+
+module.exports = { seedQuotes, seedEvents, seedLore };

@@ -272,6 +272,19 @@ function getPromptEvents(charId) {
   return storage.all('SELECT event_name, description, impact FROM character_events WHERE char_id=? AND importance>=7 ORDER BY RANDOM() LIMIT 2', [charId]);
 }
 
+function addLore(topic, content, category, importance) {
+  storage.run('INSERT INTO lore (topic, content, category, importance) VALUES (?,?,?,?)', [topic, content, category || '常识', importance || 5]);
+  storage.save();
+}
+
+function getLoreByCategory(category, limit) {
+  return storage.all('SELECT topic, content FROM lore WHERE category=? ORDER BY importance DESC LIMIT ?', [category, limit || 20]);
+}
+
+function getPromptLore(limit) {
+  return storage.all('SELECT topic, content FROM lore WHERE importance>=7 ORDER BY RANDOM() LIMIT ?', [limit || 3]);
+}
+
 function analyzeCharState(charId, userMessage, charReply) {
   const s = { moodDelta: 0, stressDelta: 0, energyDelta: 0, favorDelta: 0 };
   if (/(加油|很棒|厉害|佩服|崇拜|喜欢|谢谢|感谢)/.test(userMessage)) { s.moodDelta=1; s.energyDelta=3; s.favorDelta=2; }
@@ -293,5 +306,6 @@ module.exports = {
   getCharState, updateCharState, analyzeCharState,
   setBelief, getBeliefs,
   addQuote, getQuotes, getPromptQuotes,
-  addCharEvent, getCharEvents, getPromptEvents
+  addCharEvent, getCharEvents, getPromptEvents,
+  addLore, getLoreByCategory, getPromptLore
 };

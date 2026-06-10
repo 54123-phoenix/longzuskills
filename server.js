@@ -52,5 +52,6 @@ const PORT = process.env.PORT || 3000;
 storage.init().then(() => {
   require('./src/services/seed').seedQuotes();
   require('./src/services/seed').seedEvents();
+  require('./src/services/seed').seedLore();
   server.listen(PORT, () => console.log(`🚀 http://localhost:${PORT}`));
 });

@@ -65,6 +65,13 @@ function buildCharPrompt(charId, userId, memories) {
     if (relLines) relSection = `\n\n【与其他角色的关系】\n${relLines}`;
   }
 
+  let loreSection = '';
+  const loreItems = memory.getPromptLore(2);
+  if (loreItems && loreItems.length > 0) {
+    const lines = loreItems.map(l => `- ${l.topic}: ${l.content}`).join('\n');
+    loreSection = `\n\n【世界观参考】当对话涉及以下龙族世界观时，请确保描述准确：\n${lines}`;
+  }
+
   let stateSection = '';
   const st = memory.getCharState(charId, userId);
   if (st) {
@@ -97,7 +104,7 @@ function buildCharPrompt(charId, userId, memories) {
   }
 
   const dna = characters.getCharDNA(charId);
-  return `${ch.system}${dna}${quoteSection}${eventSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
+  return `${ch.system}${dna}${quoteSection}${eventSection}${loreSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
