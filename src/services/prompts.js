@@ -24,11 +24,20 @@ function buildCharPrompt(charId, userId, memories) {
   }
 
   let episSection = '';
-  const episodes = memory.getEpisodes(charId, userId, 10);
-  if (episodes && episodes.length > 0) {
-    const sorted = [...episodes].sort((a, b) => (b.importance || 0) - (a.importance || 0));
-    const episLines = sorted.map(e => `- ${e.event}（原因：${e.reason || ''}，情绪：${e.emotion || ''}）`).join('\n');
-    if (episLines) episSection = `\n\n【关于${userId}的经历】\n${episLines}`;
+  const recentEps = memory.getRecentEpisodes(charId, userId, 7);
+  if (recentEps && recentEps.length > 0) {
+    const lines = recentEps.map(e =>
+      `- ${memory.timeLabel(e.created_at)} ${e.event}（情绪：${e.emotion || ''}）`
+    ).join('\n');
+    episSection = `\n\n【最近7天的经历】\n${lines}`;
+  } else {
+    const allEps = memory.getEpisodes(charId, userId, 5);
+    if (allEps && allEps.length > 0) {
+      const lines = allEps.map(e =>
+        `- ${memory.timeLabel(e.created_at)} ${e.event}（情绪：${e.emotion || ''}）`
+      ).join('\n');
+      episSection = `\n\n【之前的经历】\n${lines}`;
+    }
   }
 
   let memSection = '';

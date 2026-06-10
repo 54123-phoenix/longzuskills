@@ -174,12 +174,28 @@ function setEpisode(charId, userId, opts) {
 }
 
 function getEpisodes(charId, userId, limit) {
-  const u = userId || 'default';
-  const rows = storage.all(
-    'SELECT event, reason, emotion, importance, created_at FROM episodes WHERE char_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?',
-    [charId, u, limit || 20]
-  );
-  return rows;
+  return storage.all('SELECT event, reason, emotion, importance, created_at FROM episodes WHERE char_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?', [charId, userId || 'default', limit || 10])
+    .map(r => ({ event: r.event, reason: r.reason, emotion: r.emotion, importance: r.importance, created_at: r.created_at }));
+}
+
+function getRecentEpisodes(charId, userId, days) {
+  const since = Date.now() - (days || 7) * 86400000;
+  return storage.all('SELECT event, reason, emotion, importance, created_at FROM episodes WHERE char_id=? AND user_id=? AND created_at >= ? ORDER BY created_at DESC LIMIT 10', [charId, userId || 'default', since])
+    .map(r => ({ event: r.event, reason: r.reason, emotion: r.emotion, importance: r.importance, created_at: r.created_at }));
+}
+
+function timeLabel(ts) {
+  const diff = Date.now() - ts;
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return '刚刚';
+  if (mins < 60) return `${mins}分钟前`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}小时前`;
+  const days = Math.floor(hours / 24);
+  if (days === 1) return '昨天';
+  if (days < 7) return `${days}天前`;
+  if (days < 30) return `${Math.floor(days/7)}周前`;
+  return '更早';
 }
 
 function recordRelationEvent(charId, userId, dimension, change, reason) {
@@ -197,6 +213,6 @@ module.exports = {
   setMemory, getMemories, getAllMemories,
   setRelation, getRelations,
   saveGroupMsg, getGroupHistory, cleanupGroup,
-  setEpisode, getEpisodes,
+  setEpisode, getEpisodes, getRecentEpisodes, timeLabel,
   recordRelationEvent, getRelationEvents
 };
