@@ -135,13 +135,36 @@ router.get('/history/:charId', (req, res) => {
   const uid = userId || req.headers['x-user-id'] || 'default';
   const msgs = memory.getHistory(req.params.charId, uid, parseInt(limit) || 100, parseInt(offset) || 0);
   const total = memory.getHistoryTotal(req.params.charId, uid);
-  res.json({ msgs: msgs.map(m => ({ text: m.text, isSelf: !!m.is_self, timestamp: m.created_at })), total });
+  res.json({ msgs: msgs.map(m => ({ id: m.id, text: m.text, isSelf: !!m.is_self, timestamp: m.created_at })), total });
 });
 
 router.delete('/history/:charId', (req, res) => {
   const uid = req.query.userId || req.headers['x-user-id'] || 'default';
   memory.deleteHistory(req.params.charId, uid);
   res.json({ ok: true });
+});
+
+// 逐条消息操作
+router.delete('/message', (req, res) => {
+  const { charId, messageId, userId } = req.body;
+  const uid = userId || 'default';
+  memory.deleteMessage(charId, uid, messageId);
+  res.json({ ok: true });
+});
+
+// 从指定消息重新开始（删除该消息及之后所有）
+router.post('/restart-from', (req, res) => {
+  const { charId, messageId, userId } = req.body;
+  const uid = userId || 'default';
+  memory.deleteAfterMessage(charId, uid, messageId);
+  res.json({ ok: true });
+});
+
+// 侧边栏预览：最后一条消息
+router.get('/latest-message/:charId', (req, res) => {
+  const uid = req.query.userId || req.headers['x-user-id'] || 'default';
+  const msg = memory.getLatestMessage(req.params.charId, uid);
+  res.json(msg || null);
 });
 
 router.get('/all-profiles', (req, res) => {

@@ -106,11 +106,13 @@ function enforceConstraints(charId, text) {
 function saveMessage(charId, userId, isSelf, text) {
   storage.run('INSERT INTO private_msgs (char_id, user_id, is_self, text, created_at) VALUES (?,?,?,?,?)', [charId, userId || 'default', isSelf ? 1 : 0, text, Date.now()]);
   storage.save();
+  // 自动裁剪：每个角色+用户组合最多 500 条历史
+  autoCleanup(charId, userId, 500);
 }
 
 function getHistory(charId, userId, limit, offset) {
   const l = limit || 100, o = offset || 0;
-  return storage.all('SELECT text, is_self, created_at FROM private_msgs WHERE char_id=? AND user_id=? ORDER BY created_at ASC LIMIT ? OFFSET ?', [charId, userId || 'default', l, o]);
+  return storage.all('SELECT id, text, is_self, created_at FROM private_msgs WHERE char_id=? AND user_id=? ORDER BY created_at ASC LIMIT ? OFFSET ?', [charId, userId || 'default', l, o]);
 }
 
 function getHistoryTotal(charId, userId) {
@@ -122,6 +124,34 @@ function deleteHistory(charId, userId) {
   storage.run('DELETE FROM private_msgs WHERE char_id=? AND user_id=?', [charId, userId || 'default']);
   storage.run('UPDATE profiles SET msg_count=0, trust=0, respect=0, closeness=0, dependency=0 WHERE char_id=? AND user_id=?', [charId, userId || 'default']);
   storage.save();
+}
+
+// 逐条操作：删除指定消息之后的所有消息（从这条重新开始）
+function deleteAfterMessage(charId, userId, messageId) {
+  storage.run('DELETE FROM private_msgs WHERE char_id=? AND user_id=? AND id >= ?', [charId, userId || 'default', messageId]);
+  storage.save();
+}
+
+// 单条删除
+function deleteMessage(charId, userId, messageId) {
+  storage.run('DELETE FROM private_msgs WHERE char_id=? AND user_id=? AND id = ?', [charId, userId || 'default', messageId]);
+  storage.save();
+}
+
+// 自动裁剪：每个角色最多保留 N 条消息
+function autoCleanup(charId, userId, max) {
+  const uid = userId || 'default';
+  const cnt = storage.get('SELECT COUNT(*) as cnt FROM private_msgs WHERE char_id=? AND user_id=?', [charId, uid]);
+  if (cnt && cnt.cnt > max) {
+    storage.run(`DELETE FROM private_msgs WHERE char_id=? AND user_id=? AND id NOT IN (SELECT id FROM private_msgs WHERE char_id=? AND user_id=? ORDER BY id DESC LIMIT ?)`, [charId, uid, charId, uid, max]);
+    storage.save();
+  }
+}
+
+// 获取最后一条消息（用于侧边栏预览）
+function getLatestMessage(charId, userId) {
+  const r = storage.get('SELECT text, is_self FROM private_msgs WHERE char_id=? AND user_id=? ORDER BY id DESC LIMIT 1', [charId, userId || 'default']);
+  return r || null;
 }
 
 function setMemory(charId, userId, key, value, confidence) {
@@ -308,7 +338,7 @@ function getLastThought(charId, userId) {
 
 module.exports = {
   getOrCreateProfile, updateProfile, dimLabels, analyzeMessage, enforceConstraints, keywordFallback,
-  saveMessage, getHistory, getHistoryTotal, deleteHistory,
+  saveMessage, getHistory, getHistoryTotal, deleteHistory, deleteAfterMessage, deleteMessage, autoCleanup, getLatestMessage,
   setMemory, getMemories, getAllMemories,
   setRelation, getRelations,
   saveGroupMsg, getGroupHistory, cleanupGroup,
