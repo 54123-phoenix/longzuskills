@@ -18,8 +18,8 @@ const G = {
   addLocalSystem(t) { this.messages.push({ type: 'system', text: t, ts: Date.now() }); },
 
   render() {
-    const c = document.getElementById('group-chat-area');
-    if (!c) return;
+    let c = document.getElementById('group-chat-area');
+    if (!c) { c = document.createElement('div'); c.id = 'group-chat-area'; document.body.appendChild(c); }
     c.innerHTML = `<div class="chat-header"><div class="chat-header-title">🐉 龙族聊天群</div><div class="chat-header-members" id="goc"></div></div>
       <div class="chat-messages" id="gm"></div>
       <div id="gt-avatars" style="display:flex;gap:4px;padding:4px 24px;min-height:28px;align-items:center;flex-wrap:wrap"></div>
