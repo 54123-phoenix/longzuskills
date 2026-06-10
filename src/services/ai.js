@@ -18,6 +18,15 @@ async function call(messages, options = {}) {
       });
 
       if (!r.ok) {
+        // DeepSeek 余额不足 / 额度用尽
+        if (r.status === 402 || r.status === 403) {
+          let body = null;
+          try { body = await r.json(); } catch {}
+          const errMsg = body?.error?.message || '';
+          if (/insufficient.*quota|balance|credit|额度|余额/.test(errMsg) || r.status === 402) {
+            return { error: 'insufficient_quota', message: 'AI 额度已用完，请充值后继续使用' };
+          }
+        }
         if (r.status === 429 || r.status >= 500) {
           lastError = new Error(`API ${r.status}`);
           if (attempt < retries) {
@@ -25,7 +34,7 @@ async function call(messages, options = {}) {
             continue;
           }
         }
-        return null;
+        return { error: 'api_error', message: 'AI 服务暂时不可用' };
       }
 
       const d = await r.json();
@@ -48,7 +57,15 @@ async function call(messages, options = {}) {
     }
   }
   if (lastError) console.error(`AI call failed after ${retries + 1} attempts: ${lastError.message}`);
-  return null;
+  return { error: 'api_error', message: 'AI 服务暂时不可用' };
+}
+
+function isQuotaError(result) {
+  return result && typeof result === 'object' && result.error === 'insufficient_quota';
+}
+
+function isApiError(result) {
+  return result && typeof result === 'object' && result.error === 'api_error';
 }
 
 async function extractMemories(messages) {
@@ -57,6 +74,7 @@ async function extractMemories(messages) {
     { role: 'user', content: messages.join('\n') }
   ];
   const res = await call(msgs, { model: 'deepseek-chat', temperature: 0.2, maxTokens: 300 });
+  if (isQuotaError(res) || isApiError(res)) return [];
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
@@ -66,6 +84,7 @@ async function extractEpisodes(messages) {
     { role: 'user', content: Array.isArray(messages) ? messages.map(m => typeof m === 'string' ? m : m.content).join('\n') : messages.join('\n') }
   ];
   const res = await call(msgs, { model: 'deepseek-chat', temperature: 0.2, maxTokens: 400 });
+  if (isQuotaError(res) || isApiError(res)) return [];
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
@@ -75,7 +94,8 @@ async function extractBeliefs(messages) {
     { role: 'user', content: messages.join('\n') }
   ];
   const res = await call(msgs, { model: 'deepseek-chat', temperature: 0.2, maxTokens: 400 });
+  if (isQuotaError(res) || isApiError(res)) return [];
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
-module.exports = { init, call, extractMemories, extractEpisodes, extractBeliefs };
+module.exports = { init, call, extractMemories, extractEpisodes, extractBeliefs, isQuotaError, isApiError };

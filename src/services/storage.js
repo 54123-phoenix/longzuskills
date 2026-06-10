@@ -52,6 +52,12 @@ async function init() {
 )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_lore ON lore(category)`);
   try { db.run('ALTER TABLE character_state ADD COLUMN last_thought TEXT DEFAULT \'\''); } catch(e) {}
+  // 兼容性迁移：旧版 profiles 表可能缺少某些列
+  try { db.run('ALTER TABLE profiles ADD COLUMN trust INTEGER DEFAULT 0'); } catch(e) {}
+  try { db.run('ALTER TABLE profiles ADD COLUMN respect INTEGER DEFAULT 0'); } catch(e) {}
+  try { db.run('ALTER TABLE profiles ADD COLUMN closeness INTEGER DEFAULT 0'); } catch(e) {}
+  try { db.run('ALTER TABLE profiles ADD COLUMN dependency INTEGER DEFAULT 0'); } catch(e) {}
+  try { db.run('ALTER TABLE profiles ADD COLUMN last_chat INTEGER'); } catch(e) {}
   if (!exists) flushImmediate();
 }
 

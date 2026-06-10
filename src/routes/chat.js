@@ -35,8 +35,12 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   const msgs = [{ role: 'system', content: sysPrompt }, ...hist, { role: 'user', content: message }];
 
   const reply = await ai.call(msgs, { model: model || 'deepseek-chat', temperature: 0.85, maxTokens: 250, retries: 2 });
+  // 额度不足提示
+  if (ai.isQuotaError(reply)) {
+    return res.json({ reply: '💰 AI 额度已用完，请充值后继续使用。', quotaExhausted: true });
+  }
   let thought = '';
-  let replyText = reply || '';
+  let replyText = (typeof reply === 'string') ? reply : '';
   const thoughtMatch = replyText.match(/^<([^>]+)>\s*/);
   if (thoughtMatch) {
     thought = thoughtMatch[1];
@@ -117,8 +121,11 @@ router.post('/regenerate', async (req, res) => {
   const newHist = memory.getHistory(charId, uid, 10).map(m => ({ role: m.is_self ? 'user' : 'assistant', content: m.text }));
   const msgs = [{ role: 'system', content: sysPrompt }, ...newHist];
 
-  const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.9, maxTokens: 250, retries: 2 });
-  const replyText = memory.enforceConstraints(charId, reply) || '……';
+  const reply = await ai.call(msgs, { model: model || 'deepseek-chat', temperature: 0.9, maxTokens: 250, retries: 2 });
+  if (ai.isQuotaError(reply)) {
+    return res.json({ reply: '💰 AI 额度已用完，请充值后继续使用。', quotaExhausted: true });
+  }
+  const replyText = memory.enforceConstraints(charId, typeof reply === 'string' ? reply : '') || '……';
   memory.saveMessage(charId, uid, false, replyText);
   res.json({ reply: replyText });
 });
