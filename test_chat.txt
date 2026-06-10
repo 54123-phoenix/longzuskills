@@ -1,1 +1,0 @@
-﻿{"reply":"啊这……我脸上有什么奇怪的东西吗？还是说我今天又衰气冲天到让你无语了？","profile":{"count":1,"trust":0,"respect":0,"closeness":0,"dependency":0,"labels":["陌生人"]}}
