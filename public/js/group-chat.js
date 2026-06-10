@@ -65,23 +65,34 @@ const G = {
 
     try {
       const r = await fetch('/api/group-chat', { method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, history: this.messages.filter(m => m.type !== 'system').slice(-6).map(m => ({ charId: m.charId, text: m.text, name: m.name })), userName: p.nickname })
+        body: JSON.stringify({ message: text, userId: p.nickname })
       });
       const d = await r.json();
       if (el) el.innerHTML = '';
       if (d.replies && d.replies.length > 0) {
         for (const reply of d.replies) {
-          const m = { type: 'user', text: reply.text, name: reply.name, avatar: allChars[reply.charId], color: colors[reply.charId], ts: Date.now(), isSelf: false, charId: reply.charId };
+          const m = { type: 'user', text: '', name: reply.name, avatar: allChars[reply.charId], color: colors[reply.charId], ts: Date.now(), isSelf: false, charId: reply.charId };
           this.messages.push(m); this.renderMsgs();
           if (this.socket) this.socket.emit('gm', m);
-          await new Promise(r => setTimeout(r, 600));
+          await this.typeMessage(m, reply.text);
         }
       } else if (el) { el.innerHTML = '<span style="font-size:12px;color:var(--text-light)">角色们暂时没有回应</span>'; }
     } catch (e) { if (el) el.innerHTML = ''; console.error('群聊失败', e); }
     this.isLoading = false;
   },
 
-  bindEvents() {
+  async typeMessage(msg, fullText) {
+    const bubbles = document.querySelectorAll('#gm .message-bubble');
+    const last = bubbles[bubbles.length - 1];
+    if (!last) return;
+    for (let i = 0; i < fullText.length; i++) {
+      msg.text = fullText.substring(0, i + 1);
+      last.textContent = msg.text;
+      const gm = document.getElementById('gm');
+      if (gm) gm.scrollTop = gm.scrollHeight;
+      await new Promise(r => setTimeout(r, 30));
+    }
+  },
     if (!this.socket) return;
     this.socket.on('gm', msg => { if (!msg.isSelf) { this.messages.push(msg); this.renderMsgs(); } });
     this.socket.on('on', d => { const e = document.getElementById('goc'); if (e) e.textContent = d.c + '人在线'; });

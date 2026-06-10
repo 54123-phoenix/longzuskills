@@ -36,7 +36,12 @@ function buildCharPrompt(charId, userId, memories) {
 function buildGroupPrompt(charId, userId) {
   const ch = characters.getChar(charId);
   if (!ch) return '';
-  return `${ch.system}\n${characters.GROUP_PROMPT}\n正在和"${userId}"等群聊。`;
+  const meta = characters.getAllMeta();
+  const relLines = Object.entries(ch.relations || {})
+    .map(([id, r]) => { const other = meta[id]; return other ? `- ${other.n}：${r.type}（亲密度${r.strength}）` : ''; })
+    .filter(Boolean).join('\n');
+  const relSection = relLines ? `\n\n【群内关系】你知道群里有这些人，可以和他们互动：\n${relLines}\n可以@他们、接过他们的话、或对他们的发言流露态度。` : '';
+  return `${ch.system}${relSection}\n${characters.GROUP_PROMPT}\n正在和"${userId}"等群聊。`;
 }
 
 async function extractAndSaveMemories(charId, userId, recentMessages) {

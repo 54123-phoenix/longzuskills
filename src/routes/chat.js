@@ -4,8 +4,11 @@ const characters = require('../services/characters');
 const memory = require('../services/memory');
 const prompts = require('../services/prompts');
 const ai = require('../services/ai');
+const { rateLimit } = require('../middleware/rateLimit');
 
-router.post('/chat', async (req, res) => {
+const MEMORY_EXTRACT_INTERVAL = 5;
+
+router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   const { charId, message, model, userId } = req.body;
   if (!characters.getChar(charId) || !message) return res.json({ reply: '……' });
   const uid = userId || 'default';
@@ -24,8 +27,7 @@ router.post('/chat', async (req, res) => {
   const replyText = memory.enforceConstraints(charId, reply) || '……';
   memory.saveMessage(charId, uid, false, replyText);
 
-  // Analyze message and update multi-dimensional profile
-  const deltas = memory.analyzeMessage(charId, message, replyText);
+  const deltas = memory.keywordFallback(message);
   profile.trust = Math.min(100, profile.trust + deltas.trust);
   profile.respect = Math.min(100, profile.respect + deltas.respect);
   profile.closeness = Math.min(100, profile.closeness + deltas.closeness);
@@ -34,7 +36,7 @@ router.post('/chat', async (req, res) => {
 
   // Extract long-term memories
   const recentTexts = hist.slice(-5).map(m => `${m.role === 'user' ? uid : charId}: ${m.content}`).join('\n');
-  if (recentTexts) prompts.extractAndSaveMemories(charId, uid, [recentTexts]);
+  if (recentTexts && profile.count % MEMORY_EXTRACT_INTERVAL === 0) prompts.extractAndSaveMemories(charId, uid, [recentTexts]);
 
   res.json({
     reply: replyText,
@@ -76,22 +78,25 @@ router.post('/regenerate', async (req, res) => {
 });
 
 router.get('/history/:charId', (req, res) => {
-  const { limit, offset } = req.query;
-  const msgs = memory.getHistory(req.params.charId, 'default', parseInt(limit) || 100, parseInt(offset) || 0);
-  const total = memory.getHistoryTotal(req.params.charId, 'default');
+  const { limit, offset, userId } = req.query;
+  const uid = userId || req.headers['x-user-id'] || 'default';
+  const msgs = memory.getHistory(req.params.charId, uid, parseInt(limit) || 100, parseInt(offset) || 0);
+  const total = memory.getHistoryTotal(req.params.charId, uid);
   res.json({ msgs: msgs.map(m => ({ text: m.text, isSelf: !!m.is_self, timestamp: m.created_at })), total });
 });
 
 router.delete('/history/:charId', (req, res) => {
-  memory.deleteHistory(req.params.charId, 'default');
+  const uid = req.query.userId || req.headers['x-user-id'] || 'default';
+  memory.deleteHistory(req.params.charId, uid);
   res.json({ ok: true });
 });
 
 router.get('/all-profiles', (req, res) => {
+  const uid = req.query.userId || req.headers['x-user-id'] || 'default';
   const ids = characters.getIds();
   const out = {};
   ids.forEach(id => {
-    const p = memory.getOrCreateProfile(id, 'default');
+    const p = memory.getOrCreateProfile(id, uid);
     out[id] = {
       count: p.count,
       trust: p.trust, respect: p.respect,
@@ -105,12 +110,14 @@ router.get('/all-profiles', (req, res) => {
 
 // Memory API
 router.get('/memories/:charId', (req, res) => {
-  const memories = memory.getMemories(req.params.charId, 'default', 30);
+  const uid = req.query.userId || req.headers['x-user-id'] || 'default';
+  const memories = memory.getMemories(req.params.charId, uid, 30);
   res.json(memories);
 });
 
 router.get('/all-memories', (req, res) => {
-  const memories = memory.getAllMemories('default');
+  const uid = req.query.userId || req.headers['x-user-id'] || 'default';
+  const memories = memory.getAllMemories(uid);
   const chars = characters.getAll();
   const enriched = memories.map(m => ({
     ...m,

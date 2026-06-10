@@ -3,7 +3,7 @@ const ai = require('./ai');
 
 function getOrCreateProfile(charId, userId) {
   const u = userId || 'default';
-  let p = storage.get(`SELECT msg_count, trust, respect, closeness, dependency, last_chat FROM profiles WHERE char_id='${storage.quote(charId)}' AND user_id='${storage.quote(u)}'`);
+  let p = storage.get('SELECT msg_count, trust, respect, closeness, dependency, last_chat FROM profiles WHERE char_id=? AND user_id=?', [charId, u]);
   if (p) return { count: p.msg_count, trust: p.trust, respect: p.respect, closeness: p.closeness, dependency: p.dependency, last: p.last_chat };
   try { storage.run('INSERT OR IGNORE INTO profiles (char_id, user_id, msg_count, trust, respect, closeness, dependency) VALUES (?,?,0,0,0,0,0)', [charId, u]); storage.save(); } catch(e) {}
   return { count: 0, trust: 0, respect: 0, closeness: 0, dependency: 0, last: null };
@@ -93,11 +93,10 @@ function enforceConstraints(charId, text) {
   }
 
   if (charId === 'czh') {
-    // 楚子航：超过30字才做软截断，优先保留完整语义
-    if (result.length > 30) {
-      const cut = result.substring(0, 28);
-      const lastDot = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('，'), cut.lastIndexOf(' '));
-      if (lastDot > 15) result = cut.substring(0, lastDot + 1);
+    if (result.length > 25) {
+      const cut = result.substring(0, 23);
+      const lastDot = Math.max(cut.lastIndexOf('。'), cut.lastIndexOf('！'), cut.lastIndexOf('？'), cut.lastIndexOf('，'));
+      if (lastDot > 8) result = cut.substring(0, lastDot + 1);
     }
   }
 
@@ -115,8 +114,8 @@ function getHistory(charId, userId, limit, offset) {
 }
 
 function getHistoryTotal(charId, userId) {
-  const r = storage.exec(`SELECT COUNT(*) FROM private_msgs WHERE char_id='${storage.quote(charId)}' AND user_id='${userId||'default'}'`);
-  return r[0]?.values?.[0]?.[0] || 0;
+  const r = storage.get('SELECT COUNT(*) as cnt FROM private_msgs WHERE char_id=? AND user_id=?', [charId, userId || 'default']);
+  return r?.cnt || 0;
 }
 
 function deleteHistory(charId, userId) {
@@ -126,7 +125,7 @@ function deleteHistory(charId, userId) {
 }
 
 function setMemory(charId, userId, key, value, confidence) {
-  const exist = storage.get(`SELECT id FROM memories WHERE char_id='${storage.quote(charId)}' AND user_id='${userId||'default'}' AND key='${storage.quote(key)}'`);
+  const exist = storage.get('SELECT id FROM memories WHERE char_id=? AND user_id=? AND key=?', [charId, userId || 'default', key]);
   if (exist) { storage.run('UPDATE memories SET value=?, confidence=?, updated_at=? WHERE id=?', [value, confidence || 0.5, Date.now(), exist.id]); }
   else { storage.run('INSERT INTO memories (char_id, user_id, key, value, confidence, source, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)', [charId, userId || 'default', key, value, confidence || 0.5, 'chat', Date.now(), Date.now()]); }
   storage.save();
@@ -155,14 +154,12 @@ function saveGroupMsg(msg) {
 }
 
 function getGroupHistory(limit) {
-  const r = storage.exec('SELECT * FROM group_msgs ORDER BY created_at ASC LIMIT ' + (limit || 200));
-  if (!r.length) return [];
-  return r[0].values.map(v => ({ charId: v[0], name: v[1], avatar: v[2], color: v[3], text: v[4], isSelf: !!v[5], type: v[6], timestamp: v[7] }));
+  return storage.all('SELECT * FROM group_msgs ORDER BY created_at ASC LIMIT ?', [limit || 200]).map(v => ({ charId: v[0], name: v[1], avatar: v[2], color: v[3], text: v[4], isSelf: !!v[5], type: v[6], timestamp: v[7] }));
 }
 
 function cleanupGroup(max) {
-  const cnt = (storage.exec('SELECT COUNT(*) FROM group_msgs')[0]?.values?.[0]?.[0]) || 0;
-  if (cnt > max) storage.run('DELETE FROM group_msgs WHERE created_at NOT IN (SELECT created_at FROM group_msgs ORDER BY created_at DESC LIMIT ' + (max - 100) + ')');
+  const cnt = storage.get('SELECT COUNT(*) as cnt FROM group_msgs')?.cnt || 0;
+  if (cnt > max) storage.run('DELETE FROM group_msgs WHERE created_at NOT IN (SELECT created_at FROM group_msgs ORDER BY created_at DESC LIMIT ?)', [max - 100]);
   storage.save();
 }
 

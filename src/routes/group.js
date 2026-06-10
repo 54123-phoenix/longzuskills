@@ -31,13 +31,17 @@ router.post('/group-chat', async (req, res) => {
   });
 
   const results = (await Promise.all(tasks)).filter(Boolean);
-  results.forEach(r => {
-    memory.saveGroupMsg({
-      charId: r.charId, name: characters.getMeta(r.charId).n,
-      avatar: characters.getMeta(r.charId).e, color: characters.getMeta(r.charId).c,
-      text: r.text, isSelf: false, type: 'user'
+  if (results.length > 0) {
+    const storage = require('../services/storage');
+    results.forEach(r => {
+      memory.saveGroupMsg({
+        charId: r.charId, name: characters.getMeta(r.charId).n,
+        avatar: characters.getMeta(r.charId).e, color: characters.getMeta(r.charId).c,
+        text: r.text, isSelf: false, type: 'user'
+      });
     });
-  });
+    storage.flushImmediate();
+  }
   memory.cleanupGroup(500);
   res.json({ replies: results });
 });

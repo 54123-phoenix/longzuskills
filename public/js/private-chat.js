@@ -6,13 +6,13 @@ const PC = {
   init() { this.loadProfiles(); Object.keys(window.CHARACTERS).forEach(id => { this.histories[id] = []; }); this.sidebar(); },
 
   async loadProfiles() {
-    try { const r = await fetch('/api/all-profiles'); this.profiles = await r.json(); } catch(e) {}
+    try { const r = await fetch('/api/all-profiles?userId=default'); this.profiles = await r.json(); } catch(e) {}
     this.sidebar();
   },
 
   async loadHistory(id, offset) {
     try {
-      const r = await fetch(`/api/history/${id}?limit=30&offset=${offset||0}`);
+      const r = await fetch(`/api/history/${id}?limit=30&offset=${offset||0}&userId=default`);
       const d = await r.json();
       if (offset) { this.histories[id] = [...d.msgs, ...this.histories[id]]; }
       else { this.histories[id] = d.msgs || []; }
@@ -99,7 +99,7 @@ const PC = {
     const i = document.getElementById('pi'), s = document.getElementById('ps');
     if (i && s) { s.onclick = () => { const t=i.value.trim(); if(t) this.sendMsg(id,t,i); }; i.onkeydown = e => { if(e.key==='Enter'){ const t=i.value.trim(); if(t) this.sendMsg(id,t,i); } }; }
     document.getElementById('nc')?.addEventListener('click', async () => {
-      await fetch(`/api/history/${id}`,{method:'DELETE'}); this.histories[id]=[]; this.ch=[];
+      await fetch(`/api/history/${id}?userId=default`,{method:'DELETE'}); this.histories[id]=[]; this.ch=[];
       await this.loadProfiles(); this.open(id);
     });
     if (this.ch.length > 0) this.render();
@@ -135,16 +135,29 @@ const PC = {
 
   editMsg(idx) {
     const msg = this.ch[idx]; if (!msg || !msg.isSelf) return;
-    const newText = prompt('编辑消息:', msg.text);
-    if (newText && newText.trim()) { msg.text = newText.trim(); this.ch = this.ch.slice(0, idx + 1); this.render(); this.fetchReply(this.current); }
+    const bubble = document.querySelector(`[data-idx="${idx}"] .private-bubble-self`);
+    if (!bubble) return;
+    const original = msg.text;
+    bubble.contentEditable = 'true';
+    bubble.focus();
+    const sel = window.getSelection();
+    if (sel) { const range = document.createRange(); range.selectNodeContents(bubble); sel.removeAllRanges(); sel.addRange(range); }
+    const finish = () => {
+      bubble.contentEditable = 'false';
+      const newText = bubble.textContent.trim() || original;
+      bubble.textContent = window.escHtml(newText);
+      if (newText !== original) { msg.text = newText; this.ch = this.ch.slice(0, idx + 1); this.render(); this.fetchReply(this.current); }
+    };
+    bubble.onblur = finish;
+    bubble.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); finish(); } };
   },
 
   async regenerate(idx) {
     const msg = this.ch[idx]; if (!msg) return;
-    const cutIdx = msg.isSelf ? idx : idx;
-    this.ch = this.ch.slice(0, cutIdx + (msg.isSelf ? 0 : 0)); this.render();
+    const cutIdx = msg.isSelf ? idx + 1 : idx;
+    this.ch = this.ch.slice(0, cutIdx); this.render();
     try {
-      const r = await fetch('/api/regenerate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ charId:this.current, model:this.model, userName:'default' }) });
+      const r = await fetch('/api/regenerate', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ charId:this.current, model:this.model, userId:'default' }) });
       const d = await r.json();
       if (d.reply) { this.ch.push({ text:d.reply, isSelf:false, timestamp:Date.now() }); this.render(); }
     } catch(e) {}
@@ -156,7 +169,7 @@ const PC = {
     if(i) { i.disabled=true; s.disabled=true; }
     try {
       const r = await fetch('/api/chat', { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ charId:id, message:this.ch[this.ch.length-1].text, userName:'default', model:this.model, conversationCount:this.ch.length }) });
+        body:JSON.stringify({ charId:id, message:this.ch[this.ch.length-1].text, userId:'default', model:this.model }) });
       const d = await r.json();
       if (d.reply) { this.ch.push({ text:d.reply, isSelf:false, timestamp:Date.now() }); this.render(); }
       if (d.profile) {

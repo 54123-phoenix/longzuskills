@@ -7,8 +7,8 @@ const DB_FILE = path.join(__dirname, '..', 'data.db');
 let db;
 let writeCount = 0;
 let flushTimer = null;
-const FLUSH_INTERVAL = 3000;
-const FLUSH_THRESHOLD = 10;
+const FLUSH_INTERVAL = 2000;
+const FLUSH_THRESHOLD = 15;
 
 async function init() {
   const SQL = await initSqlJs();
