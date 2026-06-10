@@ -35,7 +35,17 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   const msgs = [{ role: 'system', content: sysPrompt }, ...hist, { role: 'user', content: message }];
 
   const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.85, maxTokens: 250, retries: 2 });
-  const replyText = memory.enforceConstraints(charId, reply) || '……';
+  let thought = '';
+  let replyText = reply || '';
+  const thoughtMatch = replyText.match(/^<([^>]+)>\s*/);
+  if (thoughtMatch) {
+    thought = thoughtMatch[1];
+    replyText = replyText.replace(/^<[^>]+>\s*/, '');
+  }
+  if (thought) {
+    memory.saveLastThought(charId, uid, thought);
+  }
+  replyText = memory.enforceConstraints(charId, replyText) || '……';
   memory.saveMessage(charId, uid, false, replyText);
 
   const deltas = memory.keywordFallback(message);

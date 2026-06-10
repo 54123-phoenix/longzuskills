@@ -2,6 +2,8 @@ const characters = require('./characters');
 const memory = require('./memory');
 const ai = require('./ai');
 
+const THOUGHT_INSTRUCTION = '\n\n【内心机制】回复前先在心里快速想一句（用<>包裹），然后正常回话。内心想法只反映你的真实感受，不要直接说出来。示例：<他好像需要帮助> 你怎么了。';
+
 function buildCharPrompt(charId, userId, memories) {
   const ch = characters.getChar(charId);
   if (!ch) return '';
@@ -84,6 +86,10 @@ function buildCharPrompt(charId, userId, memories) {
     const hintText = hints.length > 0 ? '\n' + hints.map(h => `（${h}）`).join(' ') : '';
     stateSection = `\n\n【你当前的状态】\n心情: ${moodEmoji}${st.mood} | 压力: ${'█'.repeat(Math.floor(st.stress/10))} | 精力: ${'█'.repeat(Math.floor(st.energy/10))} | 好感: ${st.favor}/100${hintText}\n你的回复需自然反映当前状态。`;
   }
+  const lastThought = memory.getLastThought(charId, userId);
+  if (lastThought) {
+    stateSection += `\n刚才心里想: "${lastThought}"`;
+  }
 
   let quoteSection = '';
   const quotes = memory.getPromptQuotes(charId);
@@ -104,7 +110,7 @@ function buildCharPrompt(charId, userId, memories) {
   }
 
   const dna = characters.getCharDNA(charId);
-  return `${ch.system}${dna}${quoteSection}${eventSection}${loreSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
+  return `${ch.system}${dna}${THOUGHT_INSTRUCTION}${quoteSection}${eventSection}${loreSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {

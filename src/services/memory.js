@@ -295,6 +295,17 @@ function analyzeCharState(charId, userMessage, charReply) {
   return s;
 }
 
+function saveLastThought(charId, userId, thought) {
+  const u = userId || 'default';
+  storage.run('INSERT OR IGNORE INTO character_state (char_id, user_id, mood, stress, energy, favor) VALUES (?,?,?,?,?,?)', [charId, u, '平静', 0, 80, 20]);
+  storage.run('UPDATE character_state SET last_thought=?, updated_at=? WHERE char_id=? AND user_id=?', [thought, Date.now(), charId, u]);
+  storage.save();
+}
+function getLastThought(charId, userId) {
+  const r = storage.get('SELECT last_thought FROM character_state WHERE char_id=? AND user_id=?', [charId, userId || 'default']);
+  return r?.last_thought || '';
+}
+
 module.exports = {
   getOrCreateProfile, updateProfile, dimLabels, analyzeMessage, enforceConstraints, keywordFallback,
   saveMessage, getHistory, getHistoryTotal, deleteHistory,
@@ -307,5 +318,6 @@ module.exports = {
   setBelief, getBeliefs,
   addQuote, getQuotes, getPromptQuotes,
   addCharEvent, getCharEvents, getPromptEvents,
-  addLore, getLoreByCategory, getPromptLore
+  addLore, getLoreByCategory, getPromptLore,
+  saveLastThought, getLastThought
 };

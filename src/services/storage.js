@@ -51,6 +51,7 @@ async function init() {
   importance INTEGER DEFAULT 5
 )`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_lore ON lore(category)`);
+  try { db.run('ALTER TABLE character_state ADD COLUMN last_thought TEXT DEFAULT \'\''); } catch(e) {}
   if (!exists) flushImmediate();
 }
 
