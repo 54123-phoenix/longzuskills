@@ -13,6 +13,14 @@ function buildCharPrompt(charId, userId, memories) {
     dimSection = `\n\n【关系维度】\n信任:${'█'.repeat(Math.floor(p.trust/5))} (${p.trust}%) - ${p.trust >= 80 ? '会透露秘密' : p.trust >= 30 ? '开始坦诚' : '保持戒备'}\n尊重:${'█'.repeat(Math.floor(p.respect/5))} (${p.respect}%) - ${p.respect >= 80 ? '认可你的判断' : p.respect >= 30 ? '会考虑你的意见' : '不屑一顾'}\n亲密:${'█'.repeat(Math.floor(p.closeness/5))} (${p.closeness}%) - ${p.closeness >= 80 ? '主动找你说话' : p.closeness >= 30 ? '不排斥你' : '保持距离'}\n依赖:${'█'.repeat(Math.floor(p.dependency/5))} (${p.dependency}%) - ${p.dependency >= 80 ? '有困难会找你' : p.dependency >= 30 ? '偶尔求助' : '独自承担'}`;
   }
 
+  let episSection = '';
+  const episodes = memory.getEpisodes(charId, userId, 10);
+  if (episodes && episodes.length > 0) {
+    const sorted = [...episodes].sort((a, b) => (b.importance || 0) - (a.importance || 0));
+    const episLines = sorted.map(e => `- ${e.event}（原因：${e.reason || ''}，情绪：${e.emotion || ''}）`).join('\n');
+    if (episLines) episSection = `\n\n【关于${userId}的经历】\n${episLines}`;
+  }
+
   let memSection = '';
   if (memories && memories.length > 0) {
     const memLines = memories.filter(m => m.confidence > 0.3).slice(0, 10).map(m => `- ${m.key}: ${m.value} (确信度:${Math.floor(m.confidence*100)}%)`).join('\n');
@@ -30,7 +38,7 @@ function buildCharPrompt(charId, userId, memories) {
     if (relLines) relSection = `\n\n【与其他角色的关系】\n${relLines}`;
   }
 
-  return `${ch.system}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${memSection}${relSection}`;
+  return `${ch.system}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${episSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
@@ -64,4 +72,20 @@ async function extractAndSaveMemories(charId, userId, recentMessages) {
   } catch (e) { /* memory extraction is best-effort */ }
 }
 
-module.exports = { buildCharPrompt, buildGroupPrompt, extractAndSaveMemories };
+async function extractAndSaveEpisodes(charId, userId, recentMessages) {
+  try {
+    const episodes = await ai.extractEpisodes(recentMessages);
+    for (const ep of episodes) {
+      if (ep.event && ep.importance > 0.3) {
+        memory.setEpisode(charId, userId, {
+          event: ep.event,
+          reason: ep.reason || '',
+          emotion: ep.emotion || '',
+          importance: ep.importance || 0.5
+        });
+      }
+    }
+  } catch (e) { /* episode extraction is best-effort */ }
+}
+
+module.exports = { buildCharPrompt, buildGroupPrompt, extractAndSaveMemories, extractAndSaveEpisodes };

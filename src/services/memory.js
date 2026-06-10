@@ -163,10 +163,30 @@ function cleanupGroup(max) {
   storage.save();
 }
 
+function setEpisode(charId, userId, opts) {
+  const u = userId || 'default';
+  const o = opts || {};
+  storage.run(
+    'INSERT INTO episodes (char_id, user_id, event, reason, emotion, importance, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)',
+    [charId, u, o.event || '', o.reason || '', o.emotion || '', o.importance ?? 0.5, Date.now(), Date.now()]
+  );
+  storage.save();
+}
+
+function getEpisodes(charId, userId, limit) {
+  const u = userId || 'default';
+  const rows = storage.all(
+    'SELECT event, reason, emotion, importance, created_at FROM episodes WHERE char_id=? AND user_id=? ORDER BY created_at DESC LIMIT ?',
+    [charId, u, limit || 20]
+  );
+  return rows;
+}
+
 module.exports = {
   getOrCreateProfile, updateProfile, dimLabels, analyzeMessage, enforceConstraints, keywordFallback,
   saveMessage, getHistory, getHistoryTotal, deleteHistory,
   setMemory, getMemories, getAllMemories,
   setRelation, getRelations,
-  saveGroupMsg, getGroupHistory, cleanupGroup
+  saveGroupMsg, getGroupHistory, cleanupGroup,
+  setEpisode, getEpisodes
 };

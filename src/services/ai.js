@@ -60,4 +60,13 @@ async function extractMemories(messages) {
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
-module.exports = { init, call, extractMemories };
+async function extractEpisodes(messages) {
+  const msgs = [
+    { role: 'system', content: '从以下对话中提取关于用户的重要经历。提取的是"发生了什么+用户为什么这样做+用户的情绪"，而不是简单的事实属性。返回JSON数组，每个元素格式：{"event":"事件描述","reason":"用户这么做的原因或动机","emotion":"用户的情绪状态","importance":0.1-1.0}。只提取明确提到的信息，不要推测。最多5条。importance越高代表越能反映用户的人格或价值观。' },
+    { role: 'user', content: Array.isArray(messages) ? messages.map(m => typeof m === 'string' ? m : m.content).join('\n') : messages.join('\n') }
+  ];
+  const res = await call(msgs, { model: 'qwen-plus', temperature: 0.2, maxTokens: 400 });
+  try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
+}
+
+module.exports = { init, call, extractMemories, extractEpisodes };

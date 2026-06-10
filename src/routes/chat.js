@@ -34,9 +34,13 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   profile.dependency = Math.min(100, profile.dependency + deltas.dependency);
   memory.updateProfile(charId, uid, profile);
 
-  // Extract long-term memories
+  // Extract long-term memories & episodes
   const recentTexts = hist.slice(-5).map(m => `${m.role === 'user' ? uid : charId}: ${m.content}`).join('\n');
-  if (recentTexts && profile.count % MEMORY_EXTRACT_INTERVAL === 0) prompts.extractAndSaveMemories(charId, uid, [recentTexts]);
+  const shouldExtract = recentTexts && profile.count % MEMORY_EXTRACT_INTERVAL === 0;
+  if (shouldExtract) {
+    prompts.extractAndSaveEpisodes(charId, uid, [recentTexts]);
+    prompts.extractAndSaveMemories(charId, uid, [recentTexts]);
+  }
 
   res.json({
     reply: replyText,
