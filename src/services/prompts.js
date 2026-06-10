@@ -96,7 +96,8 @@ function buildCharPrompt(charId, userId, memories) {
     eventSection = `\n\n【你的重要经历】当对话涉及相关话题时，可以自然地回忆这些经历：\n${lines}`;
   }
 
-  return `${ch.system}${quoteSection}${eventSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
+  const dna = characters.getCharDNA(charId);
+  return `${ch.system}${dna}${quoteSection}${eventSection}${stateSection}\n正在和"${userId}"聊天。已聊${p.count}轮。${dimSection}${relEventSection}${episSection}${beliefSection}${memSection}${relSection}`;
 }
 
 function buildGroupPrompt(charId, userId) {
