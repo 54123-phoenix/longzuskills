@@ -154,7 +154,7 @@ function saveGroupMsg(msg) {
 }
 
 function getGroupHistory(limit) {
-  return storage.all('SELECT * FROM group_msgs ORDER BY created_at ASC LIMIT ?', [limit || 200]).map(v => ({ charId: v[0], name: v[1], avatar: v[2], color: v[3], text: v[4], isSelf: !!v[5], type: v[6], timestamp: v[7] }));
+  return storage.all('SELECT * FROM group_msgs ORDER BY created_at ASC LIMIT ?', [limit || 200]).map(v => ({ charId: v.char_id, name: v.name, avatar: v.avatar, color: v.color, text: v.text, isSelf: !!v.is_self, type: v.type, timestamp: v.created_at }));
 }
 
 function cleanupGroup(max) {

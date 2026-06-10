@@ -12,7 +12,8 @@ router.post('/group-chat', async (req, res) => {
   memory.saveGroupMsg({ name: uid, avatar: '👤', color: '#999', text: message, isSelf: true, type: 'user' });
 
   const ids = characters.getIds();
-  const tasks = ids.map(async id => {
+  const tasks = ids.map(async (id, i) => {
+    if (i > 0) await new Promise(r => setTimeout(r, 200));
     const sysPrompt = prompts.buildGroupPrompt(id, uid);
     const msgs = [{ role: 'system', content: sysPrompt }];
     const recentGroup = memory.getGroupHistory(8);
@@ -24,7 +25,7 @@ router.post('/group-chat', async (req, res) => {
       }
     });
     msgs.push({ role: 'user', content: message });
-    const reply = await ai.call(msgs, { model: 'deepseek-chat', temperature: 0.9, maxTokens: 200, retries: 1 });
+    const reply = await ai.call(msgs, { model: 'deepseek-chat', temperature: 0.9, maxTokens: 200, retries: 3 });
     return reply && reply.length > 1
       ? { charId: id, name: characters.getMeta(id).n, text: memory.enforceConstraints(id, reply).substring(0, 100) }
       : null;
