@@ -47,7 +47,7 @@ async function analyzeMessage(charId, userMessage, aiReply) {
       { role: 'system', content: sysPrompt },
       { role: 'user', content: userMessage }
     ];
-    const res = await ai.call(msgs, { model: 'qwen-plus', temperature: 0.1, maxTokens: 100, retries: 0 });
+    const res = await ai.call(msgs, { model: 'deepseek-chat', temperature: 0.1, maxTokens: 100, retries: 0 });
     const parsed = JSON.parse(res?.match(/\{[\s\S]*\}/)?.[0] || '{}');
     return {
       trust: Math.max(0, Math.min(3, parseInt(parsed.trust) || 0)),

@@ -1,11 +1,11 @@
-const AI_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions';
+const AI_URL = 'https://api.deepseek.com/v1/chat/completions';
 
 let apiKey;
 
 function init(key) { apiKey = key; }
 
 async function call(messages, options = {}) {
-  const { model = 'qwen-plus', temperature = 0.85, maxTokens = 250, retries = 2 } = options;
+  const { model = 'deepseek-chat', temperature = 0.85, maxTokens = 250, retries = 2 } = options;
   let lastError = null;
 
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -56,7 +56,7 @@ async function extractMemories(messages) {
     { role: 'system', content: '从以下对话中提取关于用户的关键事实和偏好。返回JSON数组，每个元素格式：{"key":"事实主题","value":"具体内容","confidence":0.1-1.0}。只提取明确提到的信息，不要推测。最多5条。' },
     { role: 'user', content: messages.join('\n') }
   ];
-  const res = await call(msgs, { model: 'qwen-plus', temperature: 0.2, maxTokens: 300 });
+  const res = await call(msgs, { model: 'deepseek-chat', temperature: 0.2, maxTokens: 300 });
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
@@ -65,7 +65,7 @@ async function extractEpisodes(messages) {
     { role: 'system', content: '从以下对话中提取关于用户的重要经历。提取的是"发生了什么+用户为什么这样做+用户的情绪"，而不是简单的事实属性。返回JSON数组，每个元素格式：{"event":"事件描述","reason":"用户这么做的原因或动机","emotion":"用户的情绪状态","importance":0.1-1.0}。只提取明确提到的信息，不要推测。最多5条。importance越高代表越能反映用户的人格或价值观。' },
     { role: 'user', content: Array.isArray(messages) ? messages.map(m => typeof m === 'string' ? m : m.content).join('\n') : messages.join('\n') }
   ];
-  const res = await call(msgs, { model: 'qwen-plus', temperature: 0.2, maxTokens: 400 });
+  const res = await call(msgs, { model: 'deepseek-chat', temperature: 0.2, maxTokens: 400 });
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 
@@ -74,7 +74,7 @@ async function extractBeliefs(messages) {
     { role: 'system', content: '从对话中提取用户的核心信念和价值观。信念是用户反复表达的深层原则、人生哲学、自我认知。不要提取表面偏好，要提取反映人格的原则。类别: 价值观(人生原则)、自我认知(如何看待自己)、世界观(如何看待世界)、偏好(深层倾向)、恐惧(害怕什么)。返回JSON数组: [{"belief":"信念描述","category":"类别","confidence":0.1-1.0}]。最多5条。只提取明确表达的信念。' },
     { role: 'user', content: messages.join('\n') }
   ];
-  const res = await call(msgs, { model: 'qwen-plus', temperature: 0.2, maxTokens: 400 });
+  const res = await call(msgs, { model: 'deepseek-chat', temperature: 0.2, maxTokens: 400 });
   try { return JSON.parse(res?.match(/\[[\s\S]*\]/)?.[0] || '[]'); } catch { return []; }
 }
 

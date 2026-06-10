@@ -34,7 +34,7 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
   const hist = memory.getHistory(charId, uid, 10).map(m => ({ role: m.is_self ? 'user' : 'assistant', content: m.text }));
   const msgs = [{ role: 'system', content: sysPrompt }, ...hist, { role: 'user', content: message }];
 
-  const reply = await ai.call(msgs, { model: model || 'qwen-plus', temperature: 0.85, maxTokens: 250, retries: 2 });
+  const reply = await ai.call(msgs, { model: model || 'deepseek-chat', temperature: 0.85, maxTokens: 250, retries: 2 });
   let thought = '';
   let replyText = reply || '';
   const thoughtMatch = replyText.match(/^<([^>]+)>\s*/);

@@ -1,7 +1,7 @@
 (function() {
 const PC = {
   current: null, histories: {}, streaming: false, profiles: {},
-  model: localStorage.getItem('dm') || 'qwen-plus',
+  model: localStorage.getItem('dm') || 'deepseek-chat',
 
   init() { this.loadProfiles(); Object.keys(window.CHARACTERS).forEach(id => { this.histories[id] = []; }); this.sidebar(); },
 
@@ -77,9 +77,8 @@ const PC = {
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:11px;color:var(--text-light)">模型</span>
           <select id="ms" onchange="window.LZPrivate.model=this.value;localStorage.setItem('dm',this.value)">
-            <option value="qwen-turbo" ${this.model==='qwen-turbo'?'selected':''}>⚡极速</option>
-            <option value="qwen-plus" ${this.model==='qwen-plus'?'selected':''}>🚀平衡</option>
-            <option value="qwen-max" ${this.model==='qwen-max'?'selected':''}>💎最强</option>
+            <option value="deepseek-chat" ${this.model==='deepseek-chat'?'selected':''}>💎 DeepSeek</option>
+            <option value="deepseek-reasoner" ${this.model==='deepseek-reasoner'?'selected':''}>🧠 推理增强</option>
           </select>
           <button class="btn btn-secondary btn-sm" id="nc">🔄新</button>
         </div>
