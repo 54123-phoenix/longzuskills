@@ -8,6 +8,7 @@ const ai = require('./src/services/ai');
 const chatRoutes = require('./src/routes/chat');
 const groupRoutes = require('./src/routes/group');
 const uploadRoutes = require('./src/routes/upload');
+const avatarRoutes = require('./src/routes/avatar');
 const ws = require('./src/websocket');
 
 const app = express();
@@ -36,6 +37,7 @@ app.use(express.json({ limit: '12mb' }));
 app.use('/api', chatRoutes);
 app.use('/api', groupRoutes);
 app.use('/api', uploadRoutes);
+app.use('/api', avatarRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {

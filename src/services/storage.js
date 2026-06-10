@@ -43,6 +43,7 @@ async function init() {
   db.run(`CREATE INDEX IF NOT EXISTS idx_dq ON dialogue_quotes(char_id)`);
   db.run(`CREATE TABLE IF NOT EXISTS character_events (id INTEGER PRIMARY KEY AUTOINCREMENT, char_id TEXT NOT NULL, event_name TEXT NOT NULL, description TEXT NOT NULL, impact TEXT DEFAULT '', period TEXT DEFAULT '', importance INTEGER DEFAULT 5)`);
   db.run(`CREATE INDEX IF NOT EXISTS idx_ce ON character_events(char_id)`);
+  db.run(`CREATE TABLE IF NOT EXISTS character_avatars (char_id TEXT PRIMARY KEY, url TEXT NOT NULL, updated_at INTEGER DEFAULT 0)`);
   db.run(`CREATE TABLE IF NOT EXISTS lore (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   topic TEXT NOT NULL,

@@ -30,7 +30,10 @@ router.post('/chat', rateLimit(20, 60000), async (req, res) => {
 
   // Build messages for AI
   const memories = memory.getMemories(charId, uid, 15);
-  const sysPrompt = prompts.buildCharPrompt(charId, uid, memories);
+  let sysPrompt = prompts.buildCharPrompt(charId, uid, memories);
+  // 注入触发词反应
+  const trigger = characters.detectTriggers(charId, message);
+  if (trigger) sysPrompt += trigger;
   const hist = memory.getHistory(charId, uid, 10).map(m => ({ role: m.is_self ? 'user' : 'assistant', content: m.text }));
   const msgs = [{ role: 'system', content: sysPrompt }, ...hist, { role: 'user', content: message }];
 

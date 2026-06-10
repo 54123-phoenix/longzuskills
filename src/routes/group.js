@@ -11,16 +11,32 @@ router.post('/group-chat', async (req, res) => {
 
   memory.saveGroupMsg({ name: uid, avatar: '👤', color: '#999', text: message, isSelf: true, type: 'user' });
 
+  // @mention 强制回复：被@的角色100%回复
+  const nameToId = {};
+  characters.getIds().forEach(id => {
+    const meta = characters.getMeta(id);
+    nameToId[meta.n] = id;   // 中文名 -> id
+    nameToId[id] = id;        // id -> id (如 @hly)
+  });
+  const forcedIds = new Set();
+  const mentionRegex = /@([^\s@，,。；;、！!？?…]+)/g;
+  let m;
+  while ((m = mentionRegex.exec(message)) !== null) {
+    if (nameToId[m[1]]) forcedIds.add(nameToId[m[1]]);
+  }
+
   // 角色回复概率：模拟真实群聊，不是每个人都插嘴
   const replyChance = { hly: 0.60, fge: 0.80, czh: 0.30, lmf: 0.50, jn: 0.45 };
   const ids = characters.getIds();
-  const selected = ids.filter(id => Math.random() < (replyChance[id] || 0.5));
+  const selected = ids.filter(id => forcedIds.has(id) || Math.random() < (replyChance[id] || 0.5));
   // 保底：至少 2 人回复（但不能全沉默）
   const pool = selected.length >= 1 ? selected : ids.sort(() => Math.random() - 0.5).slice(0, 2);
 
   const tasks = pool.map(async (id, i) => {
     if (i > 0) await new Promise(r => setTimeout(r, 200));
-    const sysPrompt = prompts.buildGroupPrompt(id, uid);
+    let sysPrompt = prompts.buildGroupPrompt(id, uid);
+    const trigger = characters.detectTriggers(id, message);
+    if (trigger) sysPrompt += trigger;
     const msgs = [{ role: 'system', content: sysPrompt }];
     const recentGroup = memory.getGroupHistory(8);
     recentGroup.forEach(m => {

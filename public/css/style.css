@@ -398,6 +398,7 @@ html, body {
   background: #fff;
   border-top: 1px solid var(--border);
   flex-shrink: 0;
+  position: relative;
 }
 
 .chat-input-wrapper {
@@ -439,6 +440,50 @@ html, body {
 
 .chat-send-btn:hover {
   background: var(--primary-light);
+}
+
+/* @mention dropdown */
+.mention-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 24px;
+  right: 24px;
+  max-height: 200px;
+  overflow-y: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 -4px 16px var(--shadow);
+  z-index: 100;
+  margin-bottom: 4px;
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text);
+  font-size: 14px;
+  transition: background 0.15s;
+  border-bottom: 1px solid var(--border);
+}
+
+.mention-item:last-child {
+  border-bottom: none;
+}
+
+.mention-item:hover,
+.mention-item.active {
+  background: var(--primary);
+  color: #fff;
+}
+
+.mention-item span:first-child {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
 }
 
 .chat-send-btn:disabled {

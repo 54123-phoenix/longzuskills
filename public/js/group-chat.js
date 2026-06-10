@@ -2,6 +2,16 @@
 const G = {
   messages: [], socket: null, isLoading: false,
 
+  // @mention 自动补全数据
+  mentionChars: [
+    { id: 'hly', name: '绘梨衣', emoji: '🌸' },
+    { id: 'fge', name: '芬格尔', emoji: '🍔' },
+    { id: 'czh', name: '楚子航', emoji: '🗡️' },
+    { id: 'lmf', name: '路明非', emoji: '🐉' },
+    { id: 'jn', name: '江南', emoji: '✍️' }
+  ],
+  mentionActive: -1,  // 当前高亮项索引
+
   init(socket) {
     this.socket = socket;
     this.bindEvents();
@@ -25,10 +35,25 @@ const G = {
       <div id="gt-avatars" style="display:flex;gap:4px;padding:4px 24px;min-height:28px;align-items:center;flex-wrap:wrap"></div>
       <div class="chat-input-area"><div class="chat-input-wrapper">
         <input class="chat-input" id="gi" placeholder="输入消息..." maxlength="500">
-        <button class="chat-send-btn" id="gs">发送</button></div></div>`;
+        <button class="chat-send-btn" id="gs">发送</button></div>
+        <div class="mention-dropdown" id="gmd" style="display:none"></div></div></div>`;
     this.renderMsgs();
     const i = document.getElementById('gi'), s = document.getElementById('gs');
-    if (i && s) { s.onclick = () => this.send(i); i.onkeydown = e => { if (e.key === 'Enter') this.send(i); }; }
+    if (i && s) {
+      s.onclick = () => this.send(i);
+      i.onkeydown = e => {
+        const dd = document.getElementById('gmd');
+        if (dd && dd.style.display !== 'none') {
+          const items = dd.querySelectorAll('.mention-item');
+          if (e.key === 'ArrowDown') { e.preventDefault(); this.mentionActive = Math.min(this.mentionActive + 1, items.length - 1); this.highlightMention(items); return; }
+          if (e.key === 'ArrowUp') { e.preventDefault(); this.mentionActive = Math.max(this.mentionActive - 1, 0); this.highlightMention(items); return; }
+          if (e.key === 'Enter' && this.mentionActive >= 0) { e.preventDefault(); this.selectMentionFromDropdown(items[this.mentionActive], i); return; }
+          if (e.key === 'Escape') { e.preventDefault(); this.hideMentionDropdown(); return; }
+        }
+        if (e.key === 'Enter') this.send(i);
+      };
+      i.addEventListener('input', () => this.handleMentionInput(i));
+    }
   },
 
   renderMsgs() {
@@ -100,6 +125,72 @@ const G = {
       await new Promise(r => setTimeout(r, 30));
     }
   },
+
+  // --- @mention 自动补全 ---
+  handleMentionInput(input) {
+    const val = input.value;
+    const cursorPos = input.selectionStart;
+    // 找到光标前最近的 @
+    const beforeCursor = val.substring(0, cursorPos);
+    const atIdx = beforeCursor.lastIndexOf('@');
+    if (atIdx === -1) { this.hideMentionDropdown(); return; }
+    // 检查@前面是否是空格或开头（确保是新的mention）
+    if (atIdx > 0 && beforeCursor[atIdx - 1] !== ' ') { this.hideMentionDropdown(); return; }
+    const query = beforeCursor.substring(atIdx + 1).toLowerCase();
+    // @后不能有空格
+    if (query.includes(' ')) { this.hideMentionDropdown(); return; }
+    const filtered = this.mentionChars.filter(c =>
+      c.name.includes(query) || c.id.includes(query) || (query === '' || c.name.toLowerCase().includes(query))
+    );
+    if (filtered.length === 0) { this.hideMentionDropdown(); return; }
+    this.mentionActive = 0;
+    this.showMentionDropdown(filtered, input, atIdx);
+  },
+
+  showMentionDropdown(chars, input, atIdx) {
+    const dd = document.getElementById('gmd');
+    if (!dd) return;
+    dd.style.display = 'block';
+    dd.innerHTML = chars.map((c, i) =>
+      `<div class="mention-item${i === 0 ? ' active' : ''}" data-id="${c.id}" data-name="${c.name}" data-idx="${i}">
+        <span>${c.emoji}</span><span>${c.name}</span>
+      </div>`
+    ).join('');
+    dd.querySelectorAll('.mention-item').forEach(item => {
+      item.addEventListener('click', () => this.selectMentionFromDropdown(item, input));
+    });
+    this._mentionAtIdx = atIdx;
+  },
+
+  highlightMention(items) {
+    items.forEach((item, i) => {
+      item.classList.toggle('active', i === this.mentionActive);
+    });
+  },
+
+  selectMentionFromDropdown(item, input) {
+    const name = item.dataset.name;
+    const atIdx = this._mentionAtIdx;
+    const val = input.value;
+    const cursorPos = input.selectionStart;
+    // 替换 @query 为 @name
+    const before = val.substring(0, atIdx);
+    const after = val.substring(cursorPos);
+    input.value = before + '@' + name + ' ' + after;
+    this.hideMentionDropdown();
+    // 光标放到插入的名字后面
+    const newPos = atIdx + name.length + 2;
+    input.setSelectionRange(newPos, newPos);
+    input.focus();
+  },
+
+  hideMentionDropdown() {
+    const dd = document.getElementById('gmd');
+    if (dd) { dd.style.display = 'none'; dd.innerHTML = ''; }
+    this.mentionActive = -1;
+    this._mentionAtIdx = -1;
+  },
+  // --- end @mention ---
 
   bindEvents() {
     if (!this.socket) return;

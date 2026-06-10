@@ -29,7 +29,7 @@ const PC = {
         const top = [prof.trust, prof.closeness, prof.respect, prof.dependency];
         const score = Math.floor(top.reduce((a,b)=>a+b,0)/4);
         return `<div class="private-chat-item ${this.current===ch.id?'active':''}" data-c="${ch.id}">
-          <div class="private-chat-avatar" style="background:${ch.color}">${ch.emoji}</div>
+          <div class="private-chat-avatar" style="background:${ch.avatar?'transparent':ch.color}">${ch.avatar?`<img src="${window.escHtml(ch.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ch.emoji}</div>
           <div class="private-chat-info">
             <div class="private-chat-name">${ch.name}
               <span style="font-size:10px;color:${score>50?'#e8739a':score>20?'#f5a623':'#999'};margin-left:4px">${prof.labels[0]||'...'}</span>
@@ -69,7 +69,7 @@ const PC = {
     main.innerHTML = `<div class="private-chat-container">
       <div class="private-chat-header">
         <div class="private-chat-header-left">
-          <div class="private-chat-header-avatar" style="background:${ch.color}">${ch.emoji}</div>
+          <div class="private-chat-header-avatar" style="background:${ch.avatar?'transparent':ch.color}">${ch.avatar?`<img src="${window.escHtml(ch.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ch.emoji}</div>
           <div><div class="private-chat-header-name">${ch.name}
             <span class="role-badge ${id}">${['hly','fge','czh','lmf','jn'].indexOf(id)+1}/5</span>
             <span style="font-size:12px;color:#999;margin-left:6px">${prof.labels.join('·')||'陌生人'} · ${prof.count}轮</span></div></div>
@@ -86,7 +86,7 @@ const PC = {
       <div style="padding:8px 24px;border-bottom:1px solid var(--border);background:var(--card-bg)">${dimHTML}</div>
       <div class="private-chat-messages" id="pm">
         ${this.ch.length===0 ? `<div class="private-chat-welcome">
-          <div class="welcome-avatar" style="background:${ch.color}">${ch.emoji}</div>
+          <div class="welcome-avatar" style="background:${ch.avatar?'transparent':ch.color}">${ch.avatar?`<img src="${window.escHtml(ch.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ch.emoji}</div>
           <div class="welcome-text">和 ${ch.name} 对话</div>
           <div class="private-chat-stats">均分${score} · ${prof.labels.join(',')}</div>
           <div class="intimacy-bar"><div class="intimacy-fill" style="width:${score}%"></div></div></div>` : ''}
@@ -121,7 +121,7 @@ const PC = {
           <div class="private-msg-bubble private-bubble-self">${e(m.text)}</div></div>`;
       } else {
         return `<div class="private-msg private-msg-other" data-char="${id}" data-idx="${i}">
-          <div class="private-msg-avatar" style="background:${ch.color}">${ch.emoji}</div>
+          <div class="private-msg-avatar" style="background:${ch.avatar?'transparent':ch.color}">${ch.avatar?`<img src="${e(ch.avatar)}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`:ch.emoji}</div>
           <div class="private-msg-content">
             <div class="private-msg-name">${ch.name}</div>
             <div class="private-msg-bubble private-bubble-other">${e(m.text)}</div>
