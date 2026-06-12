@@ -144,8 +144,8 @@ const G = {
     const p = window.UserProfile.get();
     const imgMatch = text.match(/^https?:\/\/.*\.(png|jpg|jpeg|gif|webp)(\?.*)?$/i);
     const msg = imgMatch
-      ? { type: 'image', url: text, name: p.nickname, avatar: p.avatar, color: p.color, ts: Date.now(), isSelf: true }
-      : { type: 'user', text, name: p.nickname, avatar: p.avatar, color: p.color, ts: Date.now(), isSelf: true };
+      ? { type: "image", url: text, name: p.nickname, avatar: p.avatar, color: p.color, ts: Date.now(), isSelf: true, _local: true }
+      : { type: "user", text, name: p.nickname, avatar: p.avatar, color: p.color, ts: Date.now(), isSelf: true, _local: true };
     this.messages.push(msg); this.renderMsgs(); input.value = '';
 
     this.isLoading = true;
@@ -165,7 +165,7 @@ const G = {
       if (el) el.innerHTML = '';
       if (d.replies && d.replies.length > 0) {
         for (const reply of d.replies) {
-          const m = { type: 'user', text: reply.text, name: reply.name, avatar: allChars[reply.charId], color: colors[reply.charId], ts: Date.now(), isSelf: false, charId: reply.charId };
+          const m = { type: 'user', text: reply.text, name: reply.name, avatar: allChars[reply.charId], color: colors[reply.charId], ts: Date.now(), isSelf: false, charId: reply.charId, _local: true };
           this.messages.push(m); this.renderMsgs();
           if (this.socket) this.socket.emit('gm', m);
           await new Promise(r => setTimeout(r, 200));
@@ -177,7 +177,7 @@ const G = {
 
   bindEvents() {
     if (!this.socket) return;
-    this.socket.on('gm', msg => { if (!msg.isSelf) { this.messages.push(msg); this.renderMsgs(); } });
+    this.socket.on('gm', msg => { if (!msg.isSelf && !msg._local) { this.messages.push(msg); this.renderMsgs(); } });
     this.socket.on('on', d => { const e = document.getElementById('goc'); if (e) e.textContent = d.c + '人在线'; });
     this.socket.on('off', d => { const e = document.getElementById('goc'); if (e) e.textContent = d.c + '人在线'; });
   },
