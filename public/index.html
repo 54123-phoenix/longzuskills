@@ -9,7 +9,7 @@
 <body>
   <div class="app-container">
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
       <div class="sidebar-header">
         🐉 龙族聊天
         <button class="theme-toggle" id="theme-btn" title="暗色模式">🌙</button>
@@ -32,6 +32,9 @@
       <div id="user-profile"></div>
     </div>
 
+    <!-- Sidebar overlay (mobile) -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
     <!-- Main Content -->
     <div class="main-content" id="main-content">
       <div id="group-chat-area"></div>
@@ -39,6 +42,28 @@
         🐉 连接中...
       </div>
     </div>
+
+    <!-- Mobile Bottom Tab Bar -->
+    <div class="mobile-tab-bar" id="mobile-tab-bar">
+      <div class="mobile-tab active" data-tab="group" id="tab-group">
+        <span class="mobile-tab-icon">🐉</span>
+        <span class="mobile-tab-label">群聊</span>
+      </div>
+      <div class="mobile-tab" data-tab="chats" id="tab-chats">
+        <span class="mobile-tab-icon">💬</span>
+        <span class="mobile-tab-label">私聊</span>
+        <span class="badge-dot" id="badge-dot" style="display:none"></span>
+      </div>
+      <div class="mobile-tab" data-tab="menu" id="tab-menu">
+        <span class="mobile-tab-icon">☰</span>
+        <span class="mobile-tab-label">菜单</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image preview overlay -->
+  <div class="image-preview-overlay" id="image-preview-overlay" style="display:none">
+    <img id="image-preview-img" src="" alt="preview">
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
